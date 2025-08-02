@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buffer Overflow: Dancing on the Stack - terminal.blog</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0a0a;
+            --bg-secondary: #0f0f0f;
+            --bg-terminal: #000;
+            --bg-card: #0d0d0d;
+            --text-primary: #00ff00;
+            --text-secondary: #00cc00;
+            --text-meta: #008800;
+            --accent: #00ffff;
+            --accent-secondary: #ff00ff;
+            --warning: #ffff00;
+            --error: #ff0000;
+            --border: #00ff00;
+            --shadow: #00ff00;
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #f0f0f0;
+            --bg-secondary: #e0e0e0;
+            --bg-terminal: #ffffff;
+            --bg-card: #f5f5f5;
+            --text-primary: #006600;
+            --text-secondary: #004400;
+            --text-meta: #003300;
+            --accent: #0066cc;
+            --accent-secondary: #cc00cc;
+            --warning: #cc6600;
+            --error: #cc0000;
+            --border: #006600;
+            --shadow: #006600;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+        }
+
+        body {
+            font-family: 'Share Tech Mono', monospace;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Glitch background effect */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                repeating-linear-gradient(
+                    0deg,
+                    transparent,
+                    transparent 2px,
+                    rgba(0, 255, 0, 0.03) 2px,
+                    rgba(0, 255, 0, 0.03) 4px
+                );
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* Header */
+        header {
+            background: var(--bg-terminal);
+            border: 2px solid var(--border);
+            padding: 1rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .ascii-logo {
+            font-family: 'Fira Code', monospace;
+            font-size: 0.8rem;
+            line-height: 1;
+            white-space: pre;
+            color: var(--accent);
+        }
+
+        nav ul {
+            display: flex;
+            list-style: none;
+            gap: 1.5rem;
+            align-items: center;
+        }
+
+        nav a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            position: relative;
+            transition: all 0.3s;
+        }
+
+        nav a::before {
+            content: '$ ';
+            color: var(--text-meta);
+        }
+
+        nav a:hover {
+            color: var(--accent);
+            text-shadow: 0 0 10px var(--accent);
+        }
+
+        .theme-toggle {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 0.5rem 1rem;
+            font-family: inherit;
+            font-size: 0.9rem;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .theme-toggle::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: var(--accent);
+            opacity: 0.1;
+            transition: left 0.3s;
+        }
+
+        .theme-toggle:hover::before {
+            left: 100%;
+        }
+
+        /* Article Header */
+        .article-header {
+            background: var(--bg-terminal);
+            border: 2px solid var(--border);
+            margin: 2rem;
+            padding: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .terminal-header {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .terminal-button {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--error);
+        }
+
+        .terminal-button:nth-child(2) {
+            background: var(--warning);
+        }
+
+        .terminal-button:nth-child(3) {
+            background: var(--text-secondary);
+        }
+
+        .article-title {
+            font-family: 'Fira Code', monospace;
+            font-size: 2rem;
+            color: var(--accent);
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .article-meta {
+            display: flex;
+            gap: 1.5rem;
+            font-size: 0.9rem;
+            color: var(--text-meta);
+        }
+
+        /* Main Content */
+        .article-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 2rem;
+            position: relative;
+            z-index: 5;
+        }
+
+        /* Table of Contents */
+        .toc-sidebar {
+            position: sticky;
+            top: 120px;
+            height: fit-content;
+        }
+
+        .toc-widget {
+            background: var(--bg-terminal);
+            border: 1px solid var(--border);
+            padding: 1.5rem;
+            position: relative;
+        }
+
+        .toc-widget::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 30px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .widget-title {
+            font-family: 'Fira Code', monospace;
+            font-size: 1rem;
+            color: var(--accent);
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            position: relative;
+            z-index: 1;
+        }
+
+        .toc-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .toc-list {
+            list-style: none;
+        }
+
+        .toc-list li {
+            margin-bottom: 0.75rem;
+        }
+
+        .toc-list a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.85rem;
+            display: block;
+            transition: all 0.3s;
+            position: relative;
+            padding-left: 1rem;
+        }
+
+        .toc-list a::before {
+            content: '▸';
+            position: absolute;
+            left: 0;
+            color: var(--text-meta);
+            transition: transform 0.3s;
+        }
+
+        .toc-list a:hover {
+            color: var(--accent);
+            text-shadow: 0 0 5px var(--accent);
+        }
+
+        .toc-list a:hover::before {
+            transform: translateX(3px);
+        }
+
+        .toc-list .active {
+            color: var(--accent);
+            font-weight: 500;
+        }
+
+        .toc-list .active::before {
+            content: '▾';
+            color: var(--accent);
+        }
+
+        /* Article Content */
+        .article-content {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            padding: 3rem;
+            position: relative;
+        }
+
+        .article-content::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent), var(--accent-secondary));
+        }
+
+        .article-body {
+            font-family: 'Fira Code', monospace;
+            font-size: 0.95rem;
+            line-height: 1.8;
+            color: var(--text-secondary);
+        }
+
+        .article-body h2 {
+            font-size: 1.5rem;
+            color: var(--accent);
+            margin: 2rem 0 1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .article-body h3 {
+            font-size: 1.2rem;
+            color: var(--text-primary);
+            margin: 1.5rem 0 0.75rem;
+        }
+
+        .article-body p {
+            margin-bottom: 1.5rem;
+        }
+
+        .article-body code {
+            background: var(--bg-terminal);
+            color: var(--warning);
+            padding: 0.2rem 0.4rem;
+            border-radius: 3px;
+            font-size: 0.9rem;
+        }
+
+        .article-body pre {
+            background: var(--bg-terminal);
+            border: 1px solid var(--border);
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            overflow-x: auto;
+            position: relative;
+        }
+
+        .article-body pre::before {
+            content: '$ ';
+            color: var(--text-meta);
+            position: absolute;
+            left: 1rem;
+            top: 1.5rem;
+        }
+
+        .article-body pre code {
+            background: none;
+            color: var(--text-primary);
+            padding: 0;
+            display: block;
+            margin-left: 1.5rem;
+        }
+
+        .article-body blockquote {
+            border-left: 3px solid var(--accent);
+            padding-left: 1.5rem;
+            margin: 1.5rem 0;
+            color: var(--text-meta);
+            font-style: italic;
+        }
+
+        .article-body ul, .article-body ol {
+            margin: 1.5rem 0;
+            padding-left: 2rem;
+        }
+
+        .article-body li {
+            margin-bottom: 0.5rem;
+        }
+
+        /* References Section */
+        .references-section {
+            background: var(--bg-terminal);
+            border: 2px solid var(--border);
+            margin: 2rem;
+            padding: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .references-title {
+            font-family: 'Fira Code', monospace;
+            font-size: 1.5rem;
+            color: var(--accent);
+            margin-bottom: 1.5rem;
+            text-transform: uppercase;
+        }
+
+        .references-list {
+            list-style: none;
+        }
+
+        .references-list li {
+            margin-bottom: 1rem;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+
+        .references-list li::before {
+            content: '[REF]';
+            position: absolute;
+            left: 0;
+            color: var(--text-meta);
+            font-size: 0.8rem;
+        }
+
+        .references-list a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+
+        .references-list a:hover {
+            color: var(--accent);
+            text-shadow: 0 0 5px var(--accent);
+        }
+
+        /* Back to top button */
+        .back-to-top {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: var(--bg-terminal);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 0.75rem 1rem;
+            font-family: inherit;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            z-index: 50;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .back-to-top.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .back-to-top:hover {
+            background: var(--accent);
+            color: var(--bg-terminal);
+            box-shadow: 0 0 20px var(--accent);
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .article-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .toc-sidebar {
+                position: static;
+                margin-bottom: 2rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            nav ul {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .ascii-logo {
+                font-size: 0.7rem;
+            }
+            
+            .article-title {
+                font-size: 1.5rem;
+            }
+            
+            .article-content {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <div class="ascii-logo">
+ ██████╗ ███████╗██████╗  █████╗ ████████╗██╗  ██╗
+██╔════╝ ██╔════╝██╔══██╗██╔══██╗╚══██╔══╝██║  ██║
+██║  ███╗█████╗  ██████╔╝███████║   ██║   ███████║
+██║   ██║██╔══╝  ██╔══██╗██╔══██║   ██║   ██╔══██║
+╚██████╔╝███████╗██║  ██║██║  ██║   ██║   ██║  ██║
+ ╚═════╝ ╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝   ╚═╝   ╚═╝  ╚═╝
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="#">home</a></li>
+                    <li><a href="#">posts</a></li>
+                    <li><a href="#">about</a></li>
+                    <li><a href="#">contact</a></li>
+                    <li><button class="theme-toggle" id="theme-toggle">[theme]</button></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <div class="article-header">
+        <div class="terminal-header">
+            <div class="terminal-button"></div>
+            <div class="terminal-button"></div>
+            <div class="terminal-button"></div>
+        </div>
+        <h1 class="article-title">Buffer Overflow: Dancing on the Stack</h1>
+        <div class="article-meta">
+            <span>Category: <span style="color: var(--accent);">exploit</span></span>
+            <span>Date: <span style="color: var(--accent);">2023-11-15</span></span>
+            <span>Read Time: <span style="color: var(--accent);">15 min</span></span>
+            <span>Difficulty: <span style="color: var(--warning);">advanced</span></span>
+        </div>
+    </div>
+
+    <div class="article-container">
+        <aside class="toc-sidebar">
+            <div class="toc-widget">
+                <h3 class="widget-title">[ table_of_contents ]</h3>
+                <div class="toc-content">
+                    <ul class="toc-list">
+                        <li><a href="#introduction" class="toc-link active">Introduction</a></li>
+                        <li><a href="#memory-basics" class="toc-link">Memory Basics</a></li>
+                        <li><a href="#stack-structure" class="toc-link">Stack Structure</a></li>
+                        <li><a href="#vulnerability" class="toc-link">The Vulnerability</a></li>
+                        <li><a href="#exploitation" class="toc-link">Exploitation Techniques</a></li>
+                        <li><a href="#shellcode" class="toc-link">Shellcode Injection</a></li>
+                        <li><a href="#protections" class="toc-link">Modern Protections</a></li>
+                        <li><a href="#conclusion" class="toc-link">Conclusion</a></li>
+                    </ul>
+                </div>
+            </div>
+        </aside>
+
+        <main class="article-content">
+            <article class="article-body">
+                <section id="introduction">
+                    <h2>Introduction</h2>
+                    <p>
+                        In the realm of cybersecurity, few vulnerabilities are as fundamental yet powerful as the buffer overflow. 
+                        This classic exploit has been the gateway for countless attacks, from simple crashes to complete system 
+                        compromise. Today, we'll dive deep into the mechanics of buffer overflows, exploring how they work, 
+                        why they're dangerous, and how modern systems attempt to defend against them.
+                    </p>
+                    <p>
+                        Buffer overflows represent a perfect storm of programming errors and system design choices. They occur 
+                        when a program writes more data to a buffer than it can hold, causing the excess data to overflow into 
+                        adjacent memory locations. This seemingly simple mistake can lead to catastrophic consequences.
+                    </p>
+                </section>
+
+                <section id="memory-basics">
+                    <h2>Memory Basics</h2>
+                    <p>
+                        To understand buffer overflows, we must first understand how programs use memory. In most systems, 
+                        memory is divided into several segments:
+                    </p>
+                    <ul>
+                        <li><strong>Text Segment:</strong> Contains the actual program code</li>
+                        <li><strong>Data Segment:</strong> Holds initialized global and static variables</li>
+                        <li><strong>BSS Segment:</strong> Contains uninitialized global and static variables</li>
+                        <li><strong>Heap:</strong> Used for dynamic memory allocation</li>
+                        <li><strong>Stack:</strong> Stores local variables, function parameters, and return addresses</li>
+                    </ul>
+                    <p>
+                        The stack is particularly interesting because it grows downward (from high memory to low memory) 
+                        and contains critical control flow information. This makes it a prime target for exploitation.
+                    </p>
+                </section>
+
+                <section id="stack-structure">
+                    <h2>Stack Structure</h2>
+                    <p>
+                        When a function is called, the system creates a stack frame containing:
+                    </p>
+                    <pre><code>function_parameters
+return_address
+saved_frame_pointer
+local_variables</code></pre>
+                    <p>
+                        The return address is crucial - it tells the program where to continue execution after the 
+                        function completes. If we can overwrite this address, we can redirect program execution to 
+                        anywhere we want.
+                    </p>
+                    <blockquote>
+                        "The stack is like a house of cards - carefully balanced and ready to collapse with the right push."
+                    </blockquote>
+                </section>
+
+                <section id="vulnerability">
+                    <h2>The Vulnerability</h2>
+                    <p>
+                        Consider this vulnerable C code:
+                    </p>
+                    <pre><code>void vulnerable_function(char *input) {
+    char buffer[64];
+    strcpy(buffer, input); // Dangerous! No bounds checking
+}</code></pre>
+                    <p>
+                        The <code>strcpy()</code> function copies the input string into <code>buffer</code> without checking 
+                        if it fits. If we provide an input longer than 64 characters, it will overflow into adjacent stack 
+                        memory, potentially overwriting the return address.
+                    </p>
+                    <p>
+                        Here's what the stack looks like before and after the overflow:
+                    </p>
+                    <pre><code>Before overflow:
+[ buffer ][ saved EBP ][ return EIP ]
+
+After overflow:
+[ buffer ][ saved EBP ][ return EIP ][ overflow data ]</code></pre>
+                </section>
+
+                <section id="exploitation">
+                    <h2>Exploitation Techniques</h2>
+                    <h3>Basic Stack Overflow</h3>
+                    <p>
+                        The simplest exploitation involves overwriting the return address with the address of our shellcode. 
+                        The payload structure typically looks like:
+                    </p>
+                    <pre><code>[ NOP sled ][ shellcode ][ new return address ]</code></pre>
+                    <p>
+                        The NOP sled (a series of NOP instructions) helps us land in our shellcode even if we slightly 
+                        miscalculate the address.
+                    </p>
+                    
+                    <h3>Return-Oriented Programming (ROP)</h3>
+                    <p>
+                        Modern systems often prevent direct code execution on the stack. ROP bypasses this by chaining 
+                        together existing code snippets (gadgets) already present in the program. Each gadget ends with 
+                        a <code>ret</code> instruction, allowing us to build complex operations.
+                    </p>
+                </section>
+
+                <section id="shellcode">
+                    <h2>Shellcode Injection</h2>
+                    <p>
+                        Shellcode is the payload we want to execute. It's typically written in assembly and designed to 
+                        be position-independent. A simple Linux shellcode might look like:
+                    </p>
+                    <pre><code>section .text
+    global _start
+
+_start:
+    ; execve("/bin/sh", 0, 0)
+    xor eax, eax
+    push eax
+    push 0x68732f2f  ; "//sh"
+    push 0x6e69622f  ; "/bin"
+    mov ebx, esp
+    push eax
+    push ebx
+    mov ecx, esp
+    xor edx, edx
+    mov al, 11       ; execve syscall
+    int 0x80</code></pre>
+                    <p>
+                        This shellcode spawns a shell by calling the <code>execve()</code> system call. Notice how it 
+                        avoids null bytes and uses position-independent addressing.
+                    </p>
+                </section>
+
+                <section id="protections">
+                    <h2>Modern Protections</h2>
+                    <p>
+                        Modern systems employ several protections against buffer overflows:
+                    </p>
+                    <ul>
+                        <li><strong>ASLR (Address Space Layout Randomization):</strong> Randomizes memory addresses to make 
+                        it harder to predict where our shellcode will be.</li>
+                        <li><strong>NX/DEP (No Execute/Data Execution Prevention):</strong> Marks the stack as non-executable, 
+                        preventing shellcode from running.</li>
+                        <li><strong>Stack Canaries:</strong> Places a random value before the return address and checks it 
+                        before function return.</li>
+                        <li><strong>Position-Independent Executables (PIE):</strong> Makes the entire program's address space 
+                        randomizable.</li>
+                    </ul>
+                    <p>
+                        However, determined attackers can often bypass these protections through techniques like ROP, 
+                        information leaks, or memory corruption primitives.
+                    </p>
+                </section>
+
+                <section id="conclusion">
+                    <h2>Conclusion</h2>
+                    <p>
+                        Buffer overflows remain a critical vulnerability class despite decades of research and protection 
+                        mechanisms. Understanding them is essential for both attackers and defenders. For developers, it 
+                        highlights the importance of secure coding practices:
+                    </p>
+                    <ul>
+                        <li>Always use bounded string functions (<code>strncpy()</code> instead of <code>strcpy()</code>)</li>
+                        <li>Validate input lengths before copying</li>
+                        <li>Use modern languages with built-in bounds checking</li>
+                        <li>Enable compiler protections like stack canaries and ASLR</li>
+                    </ul>
+                    <p>
+                        As we continue to push the boundaries of computing, the dance between vulnerability and defense 
+                        continues. The stack remains a battlefield where security is won or lost, one byte at a time.
+                    </p>
+                </section>
+            </article>
+        </main>
+    </div>
+
+    <section class="references-section">
+        <div class="terminal-header">
+            <div class="terminal-button"></div>
+            <div class="terminal-button"></div>
+            <div class="terminal-button"></div>
+        </div>
+        <h2 class="references-title">[ references ]</h2>
+        <ul class="references-list">
+            <li>
+                <a href="#">Smashing the Stack for Fun and Profit - Aleph One (Phrack 49)</a>
+            </li>
+            <li>
+                <a href="#">The Shellcoder's Handbook: Discovering and Exploiting Security Holes - Jack Koziol et al.</a>
+            </li>
+            <li>
+                <a href="#">Return-Oriented Programming: Systems, Languages, and Applications - Stephen Checkoway</a>
+            </li>
+            <li>
+                <a href="#">Practical Binary Analysis - Dennis Andriesse</a>
+            </li>
+            <li>
+                <a href="#">Hacking: The Art of Exploitation - Jon Erickson</a>
+            </li>
+            <li>
+                <a href="#">CVE-2023-XXXXX: Recent Buffer Overflow Vulnerabilities in Popular Software</a>
+            </li>
+            <li>
+                <a href="#">MITRE ATT&CK Framework: Technique T1055 (Process Injection)</a>
+            </li>
+            <li>
+                <a href="#">OWASP Top 10: A1-Injection</a>
+            </li>
+        </ul>
+    </section>
+
+    <button class="back-to-top" id="back-to-top">↑ top</button>
+
+    <script>
+        // Theme toggle functionality
+        const themeToggle = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+        
+        const savedTheme = localStorage.getItem('terminalblog-theme') || 'dark';
+        html.setAttribute('data-theme', savedTheme);
+        
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            html.setAttribute('data-theme', newTheme);
+            localStorage.setItem('terminalblog-theme', newTheme);
+            
+            document.body.classList.add('glitch');
+            setTimeout(() => {
+                document.body.classList.remove('glitch');
+            }, 500);
+        });
+        
+        // Table of Contents functionality
+        const tocLinks = document.querySelectorAll('.toc-link');
+        const sections = document.querySelectorAll('section[id]');
+        
+        function updateActiveToc() {
+            const scrollPosition = window.scrollY + 100;
+            
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.offsetHeight;
+                const sectionId = section.getAttribute('id');
+                
+                if (scrollPosition >= sectionTop && scrollPosition < sectionTop + sectionHeight) {
+                    tocLinks.forEach(link => {
+                        link.classList.remove('active');
+                        if (link.getAttribute('href') === `#${sectionId}`) {
+                            link.classList.add('active');
+                        }
+                    });
+                }
+            });
+        }
+        
+        window.addEventListener('scroll', updateActiveToc);
+        updateActiveToc();
+        
+        // Smooth scrolling for TOC links
+        tocLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const targetId = link.getAttribute('href');
+                const targetSection = document.querySelector(targetId);
+                
+                if (targetSection) {
+                    targetSection.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+        
+        // Back to top button
+        const backToTopButton = document.getElementById('back-to-top');
+        
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 300) {
+                backToTopButton.classList.add('visible');
+            } else {
+                backToTopButton.classList.remove('visible');
+            }
+        });
+        
+        backToTopButton.addEventListener('click', () => {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+        
+        // Add terminal typing effect to code blocks
+        const codeBlocks = document.querySelectorAll('pre code');
+        
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+        
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const code = entry.target;
+                    const text = code.textContent;
+                    code.textContent = '';
+                    let index = 0;
+                    
+                    const typeWriter = () => {
+                        if (index < text.length) {
+                            code.textContent += text.charAt(index);
+                            index++;
+                            setTimeout(typeWriter, 20);
+                        }
+                    };
+                    
+                    typeWriter();
+                    observer.unobserve(code);
+                }
+            });
+        }, observerOptions);
+        
+        codeBlocks.forEach(block => {
+            observer.observe(block);
+        });
+        
+        // Add random glitch effects
+        setInterval(() => {
+            if (Math.random() > 0.98) {
+                const randomElement = document.querySelector('.article-content, .references-section');
+                if (randomElement) {
+                    randomElement.style.transform = `translate(${Math.random() * 4 - 2}px, ${Math.random() * 4 - 2}px)`;
+                    setTimeout(() => {
+                        randomElement.style.transform = 'translate(0, 0)';
+                    }, 100);
+                }
+            }
+        }, 3000);
+    </script>
+</body>
+</html>
