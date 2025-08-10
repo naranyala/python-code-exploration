@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vue 3 Bottom Sheet</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <script src="https://unpkg.com/goober"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    #app {
+      height: 100%;
+      position: relative;
+    }
+
+    .content {
+      padding: 20px;
+      height: calc(100vh - 60px);
+      overflow-y: auto;
+    }
+
+    .open-sheet-btn {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      padding: 12px 24px;
+      background: #6200ee;
+      color: white;
+      border: none;
+      border-radius: 24px;
+      font-size: 16px;
+      cursor: pointer;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+      z-index: 10;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="app">
+    <div class="content">
+      <h1>Bottom Sheet Demo</h1>
+      <p>Click the button below to open the bottom sheet.</p>
+      <button class="open-sheet-btn" @click="openSheet">Open Sheet</button>
+    </div>
+
+    <bottom-sheet :is-open="isSheetOpen" @close="closeSheet">
+      <template #header>
+        <h2>Bottom Sheet Title</h2>
+      </template>
+      <template #content>
+        <div style="padding: 16px">
+          <p>This is the content of your bottom sheet. It can contain any HTML elements.</p>
+          <p>Try dragging the handle or click outside to close it.</p>
+          <div v-for="i in 10" :key="i" style="padding: 8px; border-bottom: 1px solid #eee">
+            Item {{ i }}
+          </div>
+        </div>
+      </template>
+    </bottom-sheet>
+  </div>
+
+  <script>
+    const {h, ref, computed, onMounted, onUnmounted} = Vue;
+    const {css, setup} = goober;
+
+    setup(h);
+
+    // All Goober styles organized in one place
+    const styles = {
+      backdrop: css`
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        touch-action: none;
+      `,
+      sheet: css`
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: white;
+        border-top-left-radius: 12px;
+        border-top-right-radius: 12px;
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+        transform: translateY(100%);
+        transition: transform 0.3s cubic-bezier(0.2, 0, 0, 1), height 0.2s ease;
+        will-change: transform, height;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      `,
+      sheetHeader: css`
+        padding: 16px;
+        border-bottom: 1px solid #eee;
+        display: flex;
+        justify-content: center;
+      `,
+      dragHandle: css`
+        width: 40px;
+        height: 4px;
+        background: #ddd;
+        border-radius: 2px;
+      `,
+      sheetContent: css`
+        flex-grow: 1;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+      `,
+      grabbing: css`
+        cursor: grabbing;
+      `,
+      grab: css`
+        cursor: grab;
+      `
+    };
+
+    const BottomSheet = {
+      props: {
+        isOpen: Boolean
+      },
+      emits: ['close'],
+      setup(props, {emit, slots}) {
+        const sheetRef = ref(null);
+        const startY = ref(0);
+        const currentY = ref(0);
+        const isDragging = ref(false);
+        const sheetHeight = ref('50vh');
+        const windowHeight = ref(window.innerHeight);
+
+        const sheetStyle = computed(() => ({
+          transform: props.isOpen ? 'translateY(0)' : 'translateY(100%)',
+          height: sheetHeight.value,
+          display: props.isOpen ? 'flex' : 'none'
+        }));
+
+        const handleStyle = computed(() =>
+          isDragging.value ? styles.grabbing : styles.grab
+        );
+
+        const handleTouchStart = (e) => {
+          isDragging.value = true;
+          startY.value = e.touches ? e.touches[0].clientY : e.clientY;
+          currentY.value = startY.value;
+          document.body.style.overflow = 'hidden';
+        };
+
+        const handleTouchMove = (e) => {
+          if (!isDragging.value) return;
+          e.preventDefault();
+          const y = e.touches ? e.touches[0].clientY : e.clientY;
+          const deltaY = y - currentY.value;
+          currentY.value = y;
+
+          const newHeight = windowHeight.value - y;
+          sheetHeight.value = `${Math.min(windowHeight.value, Math.max(100, newHeight))}px`;
+        };
+
+        const handleTouchEnd = () => {
+          if (!isDragging.value) return;
+          isDragging.value = false;
+          document.body.style.overflow = '';
+
+          const heightPx = parseInt(sheetHeight.value);
+          const snapPoints = [
+            windowHeight.value * 0.25,
+            windowHeight.value * 0.5,
+            windowHeight.value * 0.75
+          ];
+
+          const closest = snapPoints.reduce((prev, curr) => {
+            return (Math.abs(curr - heightPx) < Math.abs(prev - heightPx) ? curr : prev);
+          });
+
+          sheetHeight.value = `${closest}px`;
+
+          if (heightPx < windowHeight.value * 0.15) {
+            emit('close');
+          }
+        };
+
+        const handleBackdropClick = (e) => {
+          if (e.target === e.currentTarget) {
+            emit('close');
+          }
+        };
+
+        const updateWindowHeight = () => {
+          windowHeight.value = window.innerHeight;
+          if (props.isOpen) {
+            sheetHeight.value = '50vh';
+          }
+        };
+
+        onMounted(() => {
+          window.addEventListener('resize', updateWindowHeight);
+        });
+
+        onUnmounted(() => {
+          window.removeEventListener('resize', updateWindowHeight);
+        });
+
+        return () => h('div', {
+          class: styles.backdrop,
+          style: {display: props.isOpen ? 'block' : 'none'},
+          onClick: handleBackdropClick
+        }, [
+          h('div', {
+            ref: sheetRef,
+            class: styles.sheet,
+            style: sheetStyle.value,
+            onTouchstart: handleTouchStart,
+            onMousedown: handleTouchStart,
+            onTouchmove: handleTouchMove,
+            onMousemove: handleTouchMove,
+            onTouchend: handleTouchEnd,
+            onMouseup: handleTouchEnd,
+            onMouseleave: handleTouchEnd
+          }, [
+            h('div', {
+              class: styles.sheetHeader
+            }, [
+              h('div', {
+                class: styles.dragHandle,
+                style: handleStyle.value
+              })
+            ]),
+            h('div', {
+              class: styles.sheetContent
+            }, slots.content?.())
+          ])
+        ]);
+      }
+    };
+
+    const app = Vue.createApp({
+      components: {BottomSheet},
+      setup() {
+        const isSheetOpen = ref(false);
+
+        const openSheet = () => {
+          isSheetOpen.value = true;
+        };
+
+        const closeSheet = () => {
+          isSheetOpen.value = false;
+        };
+
+        return {
+          isSheetOpen,
+          openSheet,
+          closeSheet
+        };
+      }
+    });
+
+    app.mount('#app');
+  </script>
+</body>
+
+</html>

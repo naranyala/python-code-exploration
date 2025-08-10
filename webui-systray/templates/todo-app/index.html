@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mobile Dashboard</title>
+  <!-- Bulma CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    [v-cloak] {
+      display: none;
+    }
+
+    .dashboard {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Desktop Sidebar */
+    .sidebar {
+      transition: transform 0.3s ease;
+      background: #f5f5f5;
+      padding: 1.5rem;
+      width: 300px;
+      height: 100vh;
+      overflow-y: auto;
+    }
+
+    /* Desktop Layout */
+    @media screen and (min-width: 1024px) {
+      .dashboard {
+        flex-direction: row;
+      }
+
+      .main-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .mobile-navbar {
+        display: none;
+      }
+    }
+
+    /* Mobile Layout */
+    @media screen and (max-width: 1023px) {
+      .dashboard {
+        flex-direction: column;
+      }
+
+      .sidebar {
+        position: fixed;
+        z-index: 40;
+        left: 0;
+        top: 0;
+        transform: translateX(-100%);
+        box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+      }
+
+      .sidebar.is-active {
+        transform: translateX(0);
+      }
+
+      .sidebar-backdrop {
+        position: fixed;
+        z-index: 30;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+      }
+
+      .sidebar-backdrop.is-active {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      .main-content {
+        flex: 1;
+        margin-left: 0 !important;
+      }
+
+      .desktop-navbar {
+        display: none;
+      }
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s ease;
+    }
+
+    /* Improved mobile card layout */
+    @media screen and (max-width: 768px) {
+      .mobile-card-grid .column {
+        padding: 0.5rem;
+      }
+
+      .card {
+        margin-bottom: 0.5rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="app" v-cloak>
+    <div class="dashboard">
+      <!-- Mobile Navigation -->
+      <div class="mobile-navbar">
+        <nav class="navbar is-primary">
+          <div class="navbar-brand">
+            <a class="navbar-item" @click="toggleSidebar">
+              <i class="fas fa-bars"></i>
+            </a>
+            <div class="navbar-item">
+              <h1 class="title is-5 has-text-white">Dashboard</h1>
+            </div>
+          </div>
+        </nav>
+      </div>
+
+      <!-- Sidebar Backdrop (Mobile Only) -->
+      <div class="sidebar-backdrop" :class="{ 'is-active': sidebarActive }" @click="closeSidebar"
+        @touchstart="closeSidebar"></div>
+
+      <!-- Sidebar -->
+      <div class="sidebar" :class="{ 'is-active': sidebarActive }">
+        <div class="is-hidden-mobile mb-5">
+          <h1 class="title is-4">Dashboard</h1>
+          <p class="subtitle is-6">Welcome back, {{ user.name }}!</p>
+        </div>
+
+        <aside class="menu">
+          <p class="menu-label">General</p>
+          <ul class="menu-list">
+            <li><a :class="{ 'is-active': activeTab === 'dashboard' }" @click="setActiveTab('dashboard')">
+                <i class="fas fa-tachometer-alt mr-2"></i> Dashboard
+              </a></li>
+            <li><a :class="{ 'is-active': activeTab === 'analytics' }" @click="setActiveTab('analytics')">
+                <i class="fas fa-chart-line mr-2"></i> Analytics
+              </a></li>
+          </ul>
+
+          <p class="menu-label">Management</p>
+          <ul class="menu-list">
+            <li><a :class="{ 'is-active': activeTab === 'users' }" @click="setActiveTab('users')">
+                <i class="fas fa-users mr-2"></i> Users
+              </a></li>
+            <li><a :class="{ 'is-active': activeTab === 'products' }" @click="setActiveTab('products')">
+                <i class="fas fa-boxes mr-2"></i> Products
+              </a></li>
+            <li><a :class="{ 'is-active': activeTab === 'orders' }" @click="setActiveTab('orders')">
+                <i class="fas fa-shopping-cart mr-2"></i> Orders
+              </a></li>
+          </ul>
+
+          <p class="menu-label">Account</p>
+          <ul class="menu-list">
+            <li><a :class="{ 'is-active': activeTab === 'settings' }" @click="setActiveTab('settings')">
+                <i class="fas fa-cog mr-2"></i> Settings
+              </a></li>
+            <li><a @click="logout">
+                <i class="fas fa-sign-out-alt mr-2"></i> Logout
+              </a></li>
+          </ul>
+        </aside>
+      </div>
+
+      <!-- Main Content -->
+      <div class="main-content">
+        <div class="desktop-navbar">
+          <nav class="navbar is-white">
+            <div class="navbar-menu">
+              <div class="navbar-end">
+                <div class="navbar-item has-dropdown is-hoverable">
+                  <a class="navbar-link">
+                    <i class="fas fa-user-circle mr-2"></i> {{ user.name }}
+                  </a>
+                  <div class="navbar-dropdown">
+                    <a class="navbar-item" @click="setActiveTab('settings')">
+                      <i class="fas fa-cog mr-2"></i> Settings
+                    </a>
+                    <hr class="navbar-divider">
+                    <a class="navbar-item" @click="logout">
+                      <i class="fas fa-sign-out-alt mr-2"></i> Logout
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </nav>
+        </div>
+
+        <div class="section">
+          <div class="container is-fluid">
+            <!-- Dashboard Content -->
+            <div v-if="activeTab === 'dashboard'">
+              <h2 class="title is-4">Dashboard Overview</h2>
+
+              <div class="columns is-multiline mobile-card-grid">
+                <!-- Stats Cards -->
+                <div class="column is-6-mobile is-6-tablet is-3-desktop">
+                  <div class="card">
+                    <div class="card-content">
+                      <div class="media">
+                        <div class="media-left">
+                          <span class="icon is-large has-text-info">
+                            <i class="fas fa-users fa-2x"></i>
+                          </span>
+                        </div>
+                        <div class="media-content">
+                          <p class="title is-5 is-4-desktop">{{ stats.users }}</p>
+                          <p class="subtitle is-7 is-6-desktop">Total Users</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="column is-6-mobile is-6-tablet is-3-desktop">
+                  <div class="card">
+                    <div class="card-content">
+                      <div class="media">
+                        <div class="media-left">
+                          <span class="icon is-large has-text-success">
+                            <i class="fas fa-shopping-cart fa-2x"></i>
+                          </span>
+                        </div>
+                        <div class="media-content">
+                          <p class="title is-5 is-4-desktop">{{ stats.orders }}</p>
+                          <p class="subtitle is-7 is-6-desktop">New Orders</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="column is-6-mobile is-6-tablet is-3-desktop">
+                  <div class="card">
+                    <div class="card-content">
+                      <div class="media">
+                        <div class="media-left">
+                          <span class="icon is-large has-text-warning">
+                            <i class="fas fa-boxes fa-2x"></i>
+                          </span>
+                        </div>
+                        <div class="media-content">
+                          <p class="title is-5 is-4-desktop">{{ stats.products }}</p>
+                          <p class="subtitle is-7 is-6-desktop">Products</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="column is-6-mobile is-6-tablet is-3-desktop">
+                  <div class="card">
+                    <div class="card-content">
+                      <div class="media">
+                        <div class="media-left">
+                          <span class="icon is-large has-text-danger">
+                            <i class="fas fa-chart-line fa-2x"></i>
+                          </span>
+                        </div>
+                        <div class="media-content">
+                          <p class="title is-5 is-4-desktop">${{ stats.revenue }}</p>
+                          <p class="subtitle is-7 is-6-desktop">Revenue</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="column is-12">
+                  <div class="card mt-4">
+                    <header class="card-header">
+                      <p class="card-header-title">
+                        Recent Activity
+                      </p>
+                    </header>
+                    <div class="card-content">
+                      <div class="content">
+                        <div v-for="activity in recentActivities" :key="activity.id" class="media">
+                          <div class="media-left">
+                            <span class="icon has-text-info">
+                              <i :class="activity.icon"></i>
+                            </span>
+                          </div>
+                          <div class="media-content">
+                            <p>
+                              <strong>{{ activity.user }}</strong> {{ activity.action }}
+                              <br>
+                              <small>{{ activity.time }}</small>
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Other Tab Contents -->
+            <div v-if="activeTab === 'analytics'">
+              <h2 class="title is-4">Analytics</h2>
+              <div class="notification is-info">
+                Analytics content would go here
+              </div>
+            </div>
+
+            <div v-if="activeTab === 'users'">
+              <h2 class="title is-4">User Management</h2>
+              <div class="notification is-info">
+                User management content would go here
+              </div>
+            </div>
+
+            <div v-if="activeTab === 'products'">
+              <h2 class="title is-4">Product Management</h2>
+              <div class="notification is-info">
+                Product management content would go here
+              </div>
+            </div>
+
+            <div v-if="activeTab === 'orders'">
+              <h2 class="title is-4">Order Management</h2>
+              <div class="notification is-info">
+                Order management content would go here
+              </div>
+            </div>
+
+            <div v-if="activeTab === 'settings'">
+              <h2 class="title is-4">Settings</h2>
+              <div class="notification is-info">
+                Settings content would go here
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Vue.js 3 CDN -->
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+
+  <script>
+    const {createApp, ref, onMounted, onUnmounted} = Vue;
+
+    createApp({
+      setup() {
+        // State
+        const sidebarActive = ref(false);
+        const activeTab = ref('dashboard');
+        const user = ref({
+          name: 'John Doe',
+          email: 'john@example.com',
+          role: 'Administrator'
+        });
+
+        const stats = ref({
+          users: 1245,
+          orders: 48,
+          products: 326,
+          revenue: 8924
+        });
+
+        const recentActivities = ref([
+          {
+            id: 1,
+            user: 'Jane Smith',
+            action: 'placed a new order (#1234)',
+            time: '10 minutes ago',
+            icon: 'fas fa-shopping-cart'
+          },
+          {
+            id: 2,
+            user: 'Mike Johnson',
+            action: 'updated product details',
+            time: '25 minutes ago',
+            icon: 'fas fa-box'
+          },
+          {
+            id: 3,
+            user: 'Sarah Williams',
+            action: 'registered as a new user',
+            time: '1 hour ago',
+            icon: 'fas fa-user-plus'
+          },
+          {
+            id: 4,
+            user: 'Admin',
+            action: 'updated system settings',
+            time: '2 hours ago',
+            icon: 'fas fa-cog'
+          }
+        ]);
+
+        // Methods
+        const toggleSidebar = () => {
+          sidebarActive.value = !sidebarActive.value;
+        };
+
+        const closeSidebar = () => {
+          sidebarActive.value = false;
+        };
+
+        const setActiveTab = (tab) => {
+          activeTab.value = tab;
+          // On mobile, close sidebar after selecting a tab
+          if (window.innerWidth < 1024) {
+            closeSidebar();
+          }
+        };
+
+        const logout = () => {
+          alert('Logout functionality would go here');
+        };
+
+        // Handle window resize
+        const handleResize = () => {
+          if (window.innerWidth >= 1024) {
+            sidebarActive.value = false;
+          }
+        };
+
+        // Handle escape key
+        const handleEscape = (e) => {
+          if (e.key === 'Escape' && sidebarActive.value) {
+            closeSidebar();
+          }
+        };
+
+        // Lifecycle
+        onMounted(() => {
+          window.addEventListener('resize', handleResize);
+          window.addEventListener('keydown', handleEscape);
+        });
+
+        onUnmounted(() => {
+          window.removeEventListener('resize', handleResize);
+          window.removeEventListener('keydown', handleEscape);
+        });
+
+        return {
+          sidebarActive,
+          activeTab,
+          user,
+          stats,
+          recentActivities,
+          toggleSidebar,
+          closeSidebar,
+          setActiveTab,
+          logout
+        };
+      }
+    }).mount('#app');
+  </script>
+</body>
+
+</html>

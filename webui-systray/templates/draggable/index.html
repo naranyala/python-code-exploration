@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Draggable Layer Dashboard</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: sans-serif;
+      background: #111;
+      color: #eee;
+    }
+
+    #app {
+      display: flex;
+      height: 100vh;
+    }
+
+    aside {
+      width: 300px;
+      background: #1c1f2a;
+      border-right: 1px solid #333;
+      padding: 10px;
+      box-sizing: border-box;
+    }
+
+    main {
+      flex: 1;
+      position: relative;
+      background: #121621;
+    }
+
+    ul {
+      padding: 0;
+      list-style: none;
+    }
+
+    li {
+      margin: 4px 0;
+      background: #262b3b;
+      padding: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+    }
+
+    button {
+      margin-left: 6px;
+      font-size: 12px;
+    }
+
+    .layer {
+      position: absolute;
+      padding: 6px 10px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 6px;
+      color: white;
+      cursor: move;
+      user-select: none;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="app">
+    <aside>
+      <h3>Layer Stack</h3>
+      <button @click="addLayer">+ Add</button>
+      <button @click="exportJSON">Export</button>
+      <ul>
+        <li v-for="(layer, i) in layers" :key="layer.id" @click="selectLayer(layer)">
+          <span>{{ layer.label }}</span>
+          <span>
+            <button @click.stop="move(i, -1)">↑</button>
+            <button @click.stop="move(i, 1)">↓</button>
+            <button @click.stop="toggle(layer)">👁</button>
+          </span>
+        </li>
+      </ul>
+    </aside>
+    <main @mouseup="stopDrag" @mousemove="onMouseMove">
+      <div v-for="(layer, i) in layers" v-show="layer.visible" :style="layerStyle(layer, i)" class="layer"
+        @mousedown="startDrag(layer, $event)">{{ layer.text }}</div>
+    </main>
+  </div>
+
+  <script>
+    const {createApp} = Vue;
+
+    createApp({
+      data() {
+        return {
+          layers: [
+            {id: 'a', label: 'Title', text: 'Text A', x: 100, y: 120, visible: true},
+            {id: 'b', label: 'Subtitle', text: 'Text B', x: 180, y: 160, visible: true}
+          ],
+          dragging: null,
+          dragOffset: {x: 0, y: 0}
+        };
+      },
+      methods: {
+        move(i, dir) {
+          const j = i + dir;
+          if (j < 0 || j >= this.layers.length) return;
+          const temp = this.layers[i];
+          this.layers[i] = this.layers[j];
+          this.layers[j] = temp;
+        },
+        layerStyle(layer, i) {
+          return {
+            left: layer.x + 'px',
+            top: layer.y + 'px',
+            zIndex: 100 + i,
+            position: 'absolute'
+          };
+        },
+        toggle(layer) {
+          layer.visible = !layer.visible;
+        },
+        addLayer() {
+          this.layers.push({
+            id: 'L' + Date.now(),
+            label: 'New Layer',
+            text: 'Hello',
+            x: 60 + this.layers.length * 40,
+            y: 60 + this.layers.length * 20,
+            visible: true
+          });
+        },
+        selectLayer(layer) {
+          console.log('Selected:', layer.label);
+        },
+        exportJSON() {
+          const data = JSON.stringify(this.layers, null, 2);
+          const w = window.open();
+          w.document.write('<pre>' + data + '</pre>');
+        },
+        startDrag(layer, e) {
+          this.dragging = layer;
+          this.dragOffset.x = e.clientX - layer.x;
+          this.dragOffset.y = e.clientY - layer.y;
+        },
+        onMouseMove(e) {
+          if (!this.dragging) return;
+          this.dragging.x = e.clientX - this.dragOffset.x;
+          this.dragging.y = e.clientY - this.dragOffset.y;
+        },
+        stopDrag() {
+          if (this.dragging) {
+            console.log(`Dragged: ${this.dragging.label} → (${this.dragging.x}, ${this.dragging.y})`);
+            this.dragging = null;
+          }
+        }
+      }
+    }).mount('#app');
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vue 3 + goober Accordion (Alternative Approach)</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <script src="https://unpkg.com/goober"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="app">
+    <h1 style="text-align: center; margin-bottom: 20px;">Accordion Demo</h1>
+    <accordion :items="accordionItems"></accordion>
+  </div>
+
+  <script>
+    const {h, ref} = Vue;
+    const {css, setup} = goober;
+
+    // Setup goober with Vue's h()
+    setup(h);
+
+    // CSS classes using goober's css function
+    const styles = {
+      container: css`
+        width: 100%;
+        max-width: 600px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      `,
+      item: css`
+        border-bottom: 1px solid #eee;
+        &:last-child {
+          border-bottom: none;
+        }
+      `,
+      header: css`
+        width: 100%;
+        padding: 16px 20px;
+        font-size: 1rem;
+        font-weight: 500;
+        text-align: left;
+        background: #fff;
+        border: none;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: background-color 0.2s ease;
+
+        &:hover {
+          background-color: #f9f9f9;
+        }
+
+        &::after {
+          content: '+';
+          font-size: 1.2rem;
+          transition: transform 0.2s ease;
+        }
+
+        &[data-open='true']::after {
+          content: '-';
+        }
+      `,
+      content: css`
+        padding: 0 20px;
+        background: #fff;
+        overflow: hidden;
+        max-height: 0;
+        transition: max-height 0.3s ease, padding 0.3s ease;
+
+        &[data-open='true'] {
+          padding: 0 20px 20px;
+          max-height: 500px;
+        }
+      `
+    };
+
+    // Accordion Component
+    const Accordion = {
+      props: ['items'],
+      setup(props) {
+        const openIndex = ref(null);
+
+        const toggle = (index) => {
+          openIndex.value = (openIndex.value === index) ? null : index;
+        };
+
+        return () => h('div', {class: styles.container},
+          props.items.map((item, index) =>
+            h('div', {class: styles.item, key: index},
+              [
+                h('button', {
+                  class: styles.header,
+                  onClick: () => toggle(index),
+                  'data-open': openIndex.value === index
+                }, item.title),
+                h('div', {
+                  class: styles.content,
+                  'data-open': openIndex.value === index
+                }, item.content)
+              ]
+            )
+          )
+        );
+      }
+    };
+
+    // Vue App
+    const app = Vue.createApp({
+      components: {Accordion},
+      setup() {
+        const accordionItems = ref([
+          {
+            title: "What is Vue.js?",
+            content: "Vue.js is a progressive JavaScript framework for building user interfaces. It is designed from the ground up to be incrementally adoptable."
+          },
+          {
+            title: "What is goober?",
+            content: "goober is a less than 1KB CSS-in-JS solution that offers a familiar API with a much smaller footprint."
+          },
+          {
+            title: "How does this accordion work?",
+            content: "This accordion uses Vue 3's composition API and goober for styling. Each item toggles its content when clicked, with smooth animations."
+          }
+        ]);
+
+        return {accordionItems};
+      }
+    });
+
+    app.mount('#app');
+  </script>
+</body>
+
+</html>

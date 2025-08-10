@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Job Recruitment Manager</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #f9f9fb;
+      margin: 0;
+      padding: 0;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: auto;
+      padding: 16px;
+    }
+
+    h1 {
+      font-size: 1.6rem;
+      margin-bottom: 12px;
+    }
+
+    /* macOS-like tab bar */
+    .tab-bar {
+      display: flex;
+      background: #e5e5ea;
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+
+    .tab-bar button {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      background: transparent;
+      font-size: 14px;
+      color: #333;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .tab-bar button.active {
+      background: white;
+      font-weight: 500;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) inset;
+    }
+
+    .tab-bar button:hover:not(.active) {
+      background: rgba(255, 255, 255, 0.5);
+    }
+
+    /* Form styles */
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 12px;
+    }
+
+    label {
+      font-size: 13px;
+      margin-bottom: 4px;
+      color: #555;
+    }
+
+    input,
+    select,
+    textarea {
+      font-size: 14px;
+      padding: 8px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      background: white;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+
+    button {
+      padding: 8px 12px;
+      font-size: 14px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .btn-primary {
+      background: #007aff;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #0062cc;
+    }
+
+    .btn-danger {
+      background: #ff3b30;
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background: #d32f2f;
+    }
+
+    .btn-secondary {
+      background: #ccc;
+    }
+
+    /* Table */
+    .table-wrapper {
+      overflow-x: auto;
+      background: white;
+      border-radius: 6px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+
+    th,
+    td {
+      padding: 8px;
+      border: 1px solid #eee;
+      text-align: left;
+    }
+
+    th {
+      background: #f0f0f0;
+      font-size: 13px;
+    }
+
+    /* Search */
+    .search-input {
+      width: 100%;
+      max-width: 300px;
+      margin-bottom: 10px;
+    }
+
+    /* Modal */
+    .modal-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .modal {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      width: 90%;
+      max-width: 400px;
+      box-sizing: border-box;
+    }
+
+    .modal h3 {
+      margin-top: 0;
+    }
+
+    .modal p {
+      margin: 6px 0;
+    }
+
+    @media (max-width: 600px) {
+
+      /* Only show title, company, details button */
+      .desktop-col {
+        display: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="app" class="container">
+    <h1>Job Recruitment Manager</h1>
+
+    <!-- Tabs -->
+    <div class="tab-bar">
+      <button :class="{ active: activeTab === 'form' }" @click="activeTab = 'form'">Add Job</button>
+      <button :class="{ active: activeTab === 'table' }" @click="activeTab = 'table'">Jobs List</button>
+      <button :class="{ active: activeTab === 'importExport' }"
+        @click="activeTab = 'importExport'">Import/Export</button>
+    </div>
+
+    <!-- Form -->
+    <div v-if="activeTab === 'form'">
+      <h2>Add New Job</h2>
+      <div class="form-group">
+        <label>Job Title</label>
+        <input v-model="newJob.title">
+      </div>
+      <div class="form-group">
+        <label>Company</label>
+        <input v-model="newJob.company">
+      </div>
+      <div class="form-group">
+        <label>Location</label>
+        <input v-model="newJob.location">
+      </div>
+      <div class="form-group">
+        <label>Salary Range</label>
+        <input v-model="newJob.salary">
+      </div>
+      <div class="form-group">
+        <label>Job Type</label>
+        <select v-model="newJob.type">
+          <option value="">Select Type</option>
+          <option>Full-time</option>
+          <option>Part-time</option>
+          <option>Contract</option>
+          <option>Internship</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Description</label>
+        <textarea v-model="newJob.description"></textarea>
+      </div>
+      <button class="btn-primary" @click="addJob">Add Job</button>
+    </div>
+
+    <!-- Table -->
+    <div v-if="activeTab === 'table'">
+      <h2>Jobs List</h2>
+      <input class="search-input" v-model="searchQuery" placeholder="Search jobs...">
+      <div class="table-wrapper">
+        <table v-if="filteredJobs.length">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Title</th>
+              <th>Company</th>
+              <th class="desktop-col">Location</th>
+              <th class="desktop-col">Salary</th>
+              <th class="desktop-col">Type</th>
+              <th class="desktop-col">Description</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(job, index) in filteredJobs" :key="index">
+              <td>{{ index + 1 }}</td>
+              <td>{{ job.title }}</td>
+              <td>{{ job.company }}</td>
+              <td class="desktop-col">{{ job.location }}</td>
+              <td class="desktop-col">{{ job.salary }}</td>
+              <td class="desktop-col">{{ job.type }}</td>
+              <td class="desktop-col">{{ job.description }}</td>
+              <td>
+                <button class="btn-secondary" @click="showDetails(job)">Details</button>
+                <button class="btn-danger desktop-col" @click="removeJob(index)">Remove</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <p v-else>No jobs found.</p>
+      </div>
+    </div>
+
+    <!-- Import/Export -->
+    <div v-if="activeTab === 'importExport'">
+      <h2>Import/Export</h2>
+      <button class="btn-primary" @click="exportData">Export JSON</button>
+      <input type="file" accept=".json" @change="importData" style="margin-top:10px;">
+    </div>
+
+    <!-- Modal -->
+    <div v-if="selectedJob" class="modal-backdrop" @click.self="selectedJob = null">
+      <div class="modal">
+        <h3>{{ selectedJob.title }}</h3>
+        <p><strong>Company:</strong> {{ selectedJob.company }}</p>
+        <p><strong>Location:</strong> {{ selectedJob.location }}</p>
+        <p><strong>Salary:</strong> {{ selectedJob.salary }}</p>
+        <p><strong>Type:</strong> {{ selectedJob.type }}</p>
+        <p><strong>Description:</strong></p>
+        <p>{{ selectedJob.description }}</p>
+        <button class="btn-secondary" @click="selectedJob = null" style="margin-top:10px;">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <script>
+    const {createApp, computed} = Vue;
+
+    createApp({
+      data() {
+        return {
+          activeTab: 'form',
+          jobs: [],
+          newJob: {title: '', company: '', location: '', salary: '', type: '', description: ''},
+          searchQuery: '',
+          selectedJob: null
+        };
+      },
+      computed: {
+        filteredJobs() {
+          const q = this.searchQuery.trim().toLowerCase();
+          return this.jobs.filter(job =>
+            job.title.toLowerCase().includes(q) ||
+            job.company.toLowerCase().includes(q) ||
+            job.location.toLowerCase().includes(q) ||
+            job.salary.toLowerCase().includes(q) ||
+            job.type.toLowerCase().includes(q) ||
+            job.description.toLowerCase().includes(q)
+          );
+        }
+      },
+      methods: {
+        addJob() {
+          if (this.newJob.title && this.newJob.company && this.newJob.location) {
+            this.jobs.push({...this.newJob});
+            this.newJob = {title: '', company: '', location: '', salary: '', type: '', description: ''};
+            this.activeTab = 'table';
+          } else {
+            alert('Please fill in required fields: Title, Company, Location.');
+          }
+        },
+        removeJob(index) {
+          this.jobs.splice(index, 1);
+        },
+        exportData() {
+          const blob = new Blob([JSON.stringify(this.jobs, null, 2)], {type: "application/json"});
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = "jobs.json";
+          a.click();
+          URL.revokeObjectURL(url);
+        },
+        importData(event) {
+          const file = event.target.files[0];
+          if (!file) return;
+          const reader = new FileReader();
+          reader.onload = e => {
+            try {
+              const data = JSON.parse(e.target.result);
+              if (Array.isArray(data)) {
+                this.jobs = data;
+                this.activeTab = 'table';
+              } else {
+                alert('Invalid JSON format.');
+              }
+            } catch {
+              alert('Error reading file.');
+            }
+          };
+          reader.readAsText(file);
+        },
+        showDetails(job) {
+          this.selectedJob = job;
+        }
+      }
+    }).mount('#app');
+  </script>
+
+</body>
+
+</html>
