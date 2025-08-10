@@ -1,0 +1,31 @@
+{
+  "name": "pnpm-parcel-preact-starter",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "dev": "pnpm exec parcel src/index.html --port=3333",
+    "build": "parcel build src/index.html --public-url ./"
+  },
+  "alias": {
+    "react": "preact/compat",
+    "react-dom": "preact/compat"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.14.0",
+  "dependencies": {
+    "@preact/signals": "^2.2.1",
+    "goober": "^2.1.16",
+    "jotai": "^2.13.0",
+    "preact": "^10.27.0",
+    "preact-iso": "^2.9.2",
+    "preact-router": "^4.1.2",
+    "rxjs": "^7.8.2",
+    "valtio": "^2.1.5",
+    "zustand": "^5.0.7"
+  },
+  "devDependencies": {
+    "parcel": "^2.15.4"
+  }
+}
