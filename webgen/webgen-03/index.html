@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Developer Profile</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
+  <style>
+    :root {
+      --primary-color: #6b7280;
+      /* Dark gray primary */
+      --text-color: #d1d5db;
+      /* Light gray text */
+      --bg-primary: #1f2937;
+      /* Dark gray background */
+      --bg-secondary: #111827;
+      /* Darker gray for body */
+      --card-bg: #374151;
+      /* Medium gray for cards */
+      --border-color: #4b5563;
+      /* Gray border */
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      margin: 0;
+      padding: 16px;
+      color: var(--text-color);
+      background-color: var(--bg-secondary);
+      font-size: 16px;
+      line-height: 1.5;
+    }
+
+    header {
+      text-align: left;
+      padding: 16px;
+      background-color: var(--bg-primary);
+      border-radius: 8px;
+      margin-bottom: 16px;
+    }
+
+    header h1 {
+      font-size: 1.5rem;
+      margin-bottom: 8px;
+    }
+
+    h2 {
+      padding: 20px 0;
+    }
+
+    header p {
+      font-size: 0.9rem;
+      color: #9ca3af;
+    }
+
+    nav {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: left;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    nav a,
+    #btn-scroll2top {
+      text-decoration: none;
+      color: var(--text-color);
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+      font-size: 0.9rem;
+      touch-action: manipulation;
+
+      &:hover {
+        cursor: pointer;
+      }
+    }
+
+    nav a:hover,
+    #btn-scroll2top,
+    nav a.router-link-active {
+      background-color: var(--primary-color);
+      color: var(--bg-secondary);
+    }
+
+    .view {
+      background-color: var(--bg-primary);
+      padding: 16px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+    }
+
+    .blog-post {
+      background-color: var(--card-bg);
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      cursor: pointer;
+      border: 1px solid var(--border-color);
+    }
+
+    .blog-post h3 {
+      font-size: 1.1rem;
+      margin-bottom: 8px;
+    }
+
+    .blog-post p {
+      font-size: 0.9rem;
+      color: #9ca3af;
+    }
+
+    .blog-post small {
+      font-size: 0.8rem;
+      color: #6b7280;
+    }
+
+
+    .article-date {
+      margin-bottom: 15px;
+      text-decoration: underline;
+    }
+
+    .back-button {
+      background: none;
+      border: 1px solid var(--border-color);
+      color: var(--text-color);
+      padding: 8px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      display: inline-block;
+      margin-top: 5px;
+      margin-bottom: 12px;
+    }
+
+    .back-button:hover {
+      background-color: var(--primary-color);
+      color: var(--bg-secondary);
+    }
+
+    footer {
+      text-align: center;
+      padding: 16px;
+      background-color: var(--bg-primary);
+      border-radius: 8px;
+      color: #9ca3af;
+      font-size: 0.9rem;
+    }
+
+    .social-links {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    .social-links a {
+      color: #9ca3af;
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+
+    .social-links a:hover {
+      color: var(--primary-color);
+    }
+
+    .skills-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .skill-chip {
+      background-color: var(--card-bg);
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 0.85rem;
+      border: 1px solid var(--border-color);
+    }
+
+    pre {
+      background: #1a202c;
+      padding: 12px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-family: monospace;
+      font-size: 0.85rem;
+      margin: 12px 0;
+    }
+
+    .code-block {
+      position: relative;
+      margin: 12px 0;
+    }
+
+    .code-language {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: rgba(107, 114, 128, 0.2);
+      color: var(--primary-color);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+    }
+
+    .mermaid {
+      text-align: center;
+      margin: 12px 0;
+      background: var(--card-bg);
+      border-radius: 8px;
+      padding: 12px;
+      border: 1px solid var(--border-color);
+    }
+
+    /* Desktop adjustments */
+    @media (min-width: 768px) {
+      body {
+        padding: 24px;
+        max-width: 900px;
+        margin: 0 auto;
+      }
+
+      header h1 {
+        font-size: 2rem;
+      }
+
+      header p {
+        font-size: 1rem;
+      }
+
+      nav a {
+        font-size: 1rem;
+        padding: 10px 16px;
+      }
+
+      .view {
+        padding: 24px;
+      }
+
+      .blog-post {
+        padding: 16px;
+      }
+
+      .blog-post h3 {
+        font-size: 1.25rem;
+      }
+
+      .blog-post p {
+        font-size: 1rem;
+      }
+
+      pre {
+        font-size: 0.9rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+
+  <script type="application/json" id="pythonBlog">
+    {
+      "posts": [
+
+  {
+    "id": 1,
+    "title": "Mastering Python List Comprehensions",
+    "date": "2023-10-15",
+    "summary": "Write cleaner, more efficient code using Python's list comprehensions",
+    "content": [
+      "List comprehensions are one of Python's most beloved features, allowing you to create lists in a concise and readable way.",
+      "Instead of writing multi-line loops, you can condense logic into a single, expressive line.",
+      "They're not only more Pythonic but often faster than traditional for-loops.",
+      "You can also include conditions to filter elements, making them powerful for data transformation."
+    ],
+    "code": {
+      "language": "python",
+      "content": "# Traditional loop\nsquares = []\nfor x in range(10):\n    if x % 2 == 0:\n        squares.append(x**2)\n\n# Equivalent list comprehension\nsquares = [x**2 for x in range(10) if x % 2 == 0]\nprint(squares)  # Output: [0, 4, 16, 36, 64]"
+    }
+  },
+  {
+    "id": 2,
+    "title": "Understanding Python Decorators",
+    "date": "2023-11-03",
+    "summary": "Learn how to use and write decorators to modify function behavior",
+    "content": [
+      "Decorators are a powerful feature in Python that allow you to wrap a function and add functionality without modifying its code.",
+      "They are commonly used for logging, timing, access control, and caching.",
+      "Using the @ syntax, decorators make your code modular and reusable.",
+      "Under the hood, a decorator is just a function that returns another function."
+    ],
+    "code": {
+      "language": "python",
+      "content": "def timer(func):\n    import time\n    def wrapper(*args, **kwargs):\n        start = time.time()\n        result = func(*args, **kwargs)\n        print(f\"{func.__name__} took {time.time() - start:.2f}s\")\n        return result\n    return wrapper\n\n@timer\ndef slow_function():\n    time.sleep(1)\n    return \"Done\"\n\nslow_function()"
+    }
+  },
+  {
+    "id": 3,
+    "title": "Working with Python Generators",
+    "date": "2023-11-20",
+    "summary": "Use generators to handle large datasets efficiently with minimal memory",
+    "content": [
+      "Generators allow you to iterate over data without storing everything in memory at once.",
+      "Defined using functions with the 'yield' keyword, they produce items one at a time.",
+      "This is especially useful when working with large files, infinite sequences, or streaming data.",
+      "They are lazy-evaluated, meaning values are generated on-the-fly as needed."
+    ],
+    "code": {
+      "language": "python",
+      "content": "def fibonacci():\n    a, b = 0, 1\n    while True:\n        yield a\n        a, b = b, a + b\n\n# Use generator to get first 10 Fibonacci numbers\nfib = fibonacci()\nfor _ in range(10):\n    print(next(fib))"
+    }
+  },
+  {
+    "id": 4,
+    "title": "Context Managers and the 'with' Statement",
+    "date": "2023-12-05",
+    "summary": "Ensure proper resource management using context managers",
+    "content": [
+      "The 'with' statement in Python simplifies resource management, especially for files, locks, and network connections.",
+      "Context managers guarantee that setup and cleanup code runs, even if an error occurs.",
+      "You can use built-in ones like 'open()' or create your own using classes or the '@contextmanager' decorator.",
+      "This prevents common bugs like file handles being left open."
+    ],
+    "code": {
+      "language": "python",
+      "content": "from contextlib import contextmanager\n\n@contextmanager\ndef managed_file(filename):\n    try:\n        f = open(filename, 'w')\n        yield f\n    finally:\n        f.close()\n\n# Usage\nwith managed_file('hello.txt') as f:\n    f.write('Hello, World!')"
+    }
+  },
+  {
+    "id": 5,
+    "title": "Async Programming in Python with asyncio",
+    "date": "2023-12-18",
+    "summary": "Speed up I/O-bound tasks using asynchronous programming",
+    "content": [
+      "Python's asyncio library enables asynchronous programming using coroutines and the 'async/await' syntax.",
+      "It's ideal for handling many I/O-bound operations like web requests, database calls, or file operations concurrently.",
+      "Instead of waiting for each task to finish, async code can switch to other tasks during waits.",
+      "This leads to significant performance improvements in networked applications."
+    ],
+    "code": {
+      "language": "python",
+      "content": "import asyncio\n\nasync def fetch_data(task_id):\n    print(f\"Starting task {task_id}\")\n    await asyncio.sleep(2)  # Simulate I/O\n    print(f\"Task {task_id} complete\")\n    return f\"Data from task {task_id}\"\n\nasync def main():\n    results = await asyncio.gather(\n        fetch_data(1),\n        fetch_data(2),\n        fetch_data(3)\n    )\n    print(results)\n\nasyncio.run(main())"
+    }
+  }
+]
+
+    }
+
+    </script>
+
+
+  <script type="application/json" id="javascriptBlog">
+    {
+      "posts": [
+  {
+    "id": 11,
+    "title": "Modern JavaScript: Destructuring and Spread Syntax",
+    "date": "2024-03-10",
+    "summary": "Simplify object and array manipulation using destructuring and spread operators",
+    "content": [
+      "ES6 introduced destructuring assignment and the spread operator, making it easier to extract and combine data.",
+      "Destructuring allows you to unpack values from arrays or properties from objects into distinct variables.",
+      "The spread operator (...) lets you expand arrays or objects into individual elements, ideal for cloning or merging.",
+      "These features lead to cleaner, more readable code and reduce the need for temporary variables."
+    ],
+    "code": {
+      "language": "javascript",
+      "content": "// Destructuring objects\nconst user = { name: 'Alice', age: 30, role: 'dev' };\nconst { name, age } = user;\nconsole.log(name); // 'Alice'\n\n// Destructuring arrays\nconst colors = ['red', 'green', 'blue'];\nconst [first, second] = colors;\nconsole.log(first); // 'red'\n\n// Spread operator\nconst updatedUser = { ...user, age: 31 };\nconst allColors = [...colors, 'yellow'];"
+    }
+  },
+  {
+    "id": 12,
+    "title": "Understanding Closures in JavaScript",
+    "date": "2024-03-18",
+    "summary": "Master closures to write more powerful and encapsulated functions",
+    "content": [
+      "A closure is a function that remembers its outer scope, even after the outer function has finished executing.",
+      "Closures are created every time a function is defined inside another function.",
+      "They enable data privacy, function factories, and event handler callbacks with persistent state.",
+      "Closures are foundational to many JavaScript patterns, including modules and private variables."
+    ],
+    "code": {
+      "language": "javascript",
+      "content": "function createCounter() {\n  let count = 0;\n  return function() {\n    count++;\n    return count;\n  };\n}\n\nconst counter = createCounter();\nconsole.log(counter()); // 1\nconsole.log(counter()); // 2\nconsole.log(counter()); // 3\n// 'count' is private and only accessible via the closure"
+    }
+  },
+  {
+    "id": 13,
+    "title": "Async/Await and Promises in JavaScript",
+    "date": "2024-03-25",
+    "summary": "Handle asynchronous operations cleanly using Promises and async/await",
+    "content": [
+      "JavaScript is single-threaded, so asynchronous operations like API calls use Promises to avoid blocking.",
+      "A Promise represents a future value and can be pending, fulfilled, or rejected.",
+      "The async/await syntax makes asynchronous code look and behave more like synchronous code.",
+      "Error handling with try/catch in async functions improves readability over .then() and .catch() chains."
+    ],
+    "code": {
+      "language": "javascript",
+      "content": "async function fetchUserData(userId) {\n  try {\n    const response = await fetch(`https://api.example.com/users/${userId}`);\n    if (!response.ok) throw new Error('User not found');\n    const data = await response.json();\n    console.log(data.name);\n    return data;\n  } catch (error) {\n    console.error('Error:', error.message);\n  }\n}\n\nfetchUserData(1);"
+    }
+  },
+  {
+    "id": 14,
+    "title": "Arrow Functions and 'this' Context",
+    "date": "2024-04-01",
+    "summary": "Use arrow functions to simplify syntax and manage 'this' binding",
+    "content": [
+      "Arrow functions (=>) provide a shorter syntax for writing function expressions.",
+      "Unlike regular functions, arrow functions do not have their own 'this' value — they inherit it from the enclosing scope.",
+      "This makes them ideal for callbacks inside methods or event handlers where 'this' should remain bound.",
+      "However, avoid using them as methods in objects or constructors, as they behave differently."
+    ],
+    "code": {
+      "language": "javascript",
+      "content": "const person = {\n  name: 'Bob',\n  tools: ['hammer', 'wrench'],\n  showTools: function() {\n    // Regular function: 'this' refers to person\n    this.tools.forEach(tool => {\n      // Arrow function: inherits 'this' from parent\n      console.log(`${this.name} has ${tool}`);\n    });\n  }\n};\n\nperson.showTools();\n// Output: Bob has hammer, Bob has wrench"
+    }
+  },
+  {
+    "id": 15,
+    "title": "Modules in JavaScript: import and export",
+    "date": "2024-04-08",
+    "summary": "Organize and reuse code with ES6 modules",
+    "content": [
+      "JavaScript modules allow you to split your code into separate files, promoting reusability and maintainability.",
+      "Use 'export' to expose variables, functions, or classes from a file, and 'import' to use them elsewhere.",
+      "You can have named exports and a single default export per module.",
+      "Modules are natively supported in modern browsers and Node.js (with .mjs or package.json type: 'module')."
+    ],
+    "code": {
+      "language": "javascript",
+      "content": "// mathUtils.js\nexport const add = (a, b) => a + b;\nexport const PI = 3.14159;\n\nexport default function multiply(a, b) {\n  return a * b;\n}\n\n// main.js\nimport multiply, { add, PI } from './mathUtils.js';\nconsole.log(add(2, 3));     // 5\nconsole.log(multiply(4, 5)); // 20\nconsole.log(PI);            // 3.14159"
+    }
+  }
+      ]
+    }
+  </script>
+
+
+  <script type="application/json" id="rustBlog">
+    {
+      "posts": [
+     
+  {
+    "id": 16,
+    "title": "Understanding Ownership and Borrowing in Rust",
+    "date": "2024-04-15",
+    "summary": "Master Rust's unique memory management model without a garbage collector",
+    "content": [
+      "Rust’s ownership system ensures memory safety at compile time without needing a garbage collector.",
+      "Each value has a single owner, and when the owner goes out of scope, the value is automatically dropped.",
+      "You can lend access to data via references — this is called borrowing.",
+      "The borrow checker enforces strict rules: either one mutable reference or any number of immutable ones, but never both."
+    ],
+    "code": {
+      "language": "rust",
+      "content": "fn main() {\n    let s1 = String::from(\"hello\");\n\n    // s1 is moved — it can no longer be used after this\n    takes_ownership(s1);\n\n    let x = 5;\n    makes_copy(x); // Copy types like i32 are copied, not moved\n\n    println!(\"x is still valid: {}\", x);\n}\n\nfn takes_ownership(s: String) {\n    println!(\"String: {}\", s);\n} // s is dropped here\n\nfn makes_copy(n: i32) {\n    println!(\"Number: {}\", n);\n}"
+    }
+  },
+  {
+    "id": 17,
+    "title": "Error Handling with Result and Option",
+    "date": "2024-04-20",
+    "summary": "Write safe and expressive code using Rust's built-in error types",
+    "content": [
+      "Rust doesn’t have exceptions. Instead, it uses the `Result<T, E>` and `Option<T>` types to represent recoverable errors and optional values.",
+      "`Result` is used for operations that might fail (like file I/O), returning either `Ok(value)` or `Err(error)`.",
+      "`Option` handles values that may or may not exist, replacing null/undefined patterns safely.",
+      "Using `match` or the `?` operator, you can propagate and handle errors cleanly and explicitly."
+    ],
+    "code": {
+      "language": "rust",
+      "content": "use std::fs::File;\nuse std::io::{self, Read};\n\nfn read_username(filename: &str) -> Result<String, io::Error> {\n    let mut file = File::open(filename)?; // ? propagates the error\n    let mut s = String::new();\n    file.read_to_string(&mut s)?;\n    Ok(s)\n}\n\nmatch read_username(\"config.txt\") {\n    Ok(name) => println!(\"Username: {}\", name),\n    Err(e) => println!(\"Failed to read file: {}\", e),\n}"
+    }
+  },
+  {
+    "id": 18,
+    "title": "Pattern Matching with match and if let",
+    "date": "2024-04-25",
+    "summary": "Use pattern matching to destructure and control flow in expressive ways",
+    "content": [
+      "Rust’s `match` expression is a powerful control flow construct that compares a value against a series of patterns.",
+      "It’s commonly used with `enum`s like `Option` and `Result` to handle all possible cases exhaustively.",
+      "`match` is type-safe and forces you to cover every possibility, eliminating many runtime bugs.",
+      "For simpler cases, `if let` provides a concise way to match a single pattern without exhaustive matching."
+    ],
+    "code": {
+      "language": "rust",
+      "content": "fn describe_number(n: Option<i32>) {\n    match n {\n        Some(0) => println!(\"It's zero!\"),\n        Some(x) if x > 0 => println!(\"Positive: {}\", x),\n        Some(x) => println!(\"Negative: {}\", x),\n        None => println!(\"No number provided\"),\n    }\n}\n\n// Simpler: if let\nif let Some(age) = Some(25) {\n    println!(\"User is {} years old\", age);\n}"
+    }
+  },
+  {
+    "id": 19,
+    "title": "Traits: Rust's Version of Interfaces",
+    "date": "2024-05-01",
+    "summary": "Define shared behavior across types using traits",
+    "content": [
+      "Traits in Rust are similar to interfaces in other languages — they define shared methods that a type can implement.",
+      "They enable polymorphism through trait objects or generic bounds.",
+      "You can also provide default method implementations in traits.",
+      "Traits are central to Rust’s zero-cost abstractions and are used heavily in the standard library."
+    ],
+    "code": {
+      "language": "rust",
+      "content": "trait Drawable {\n    fn draw(&self);\n    \n    // Default implementation\n    fn describe(&self) {\n        println!(\"This is a drawable object.\");\n    }\n}\n\nstruct Circle;\nstruct Square;\n\nimpl Drawable for Circle {\n    fn draw(&self) {\n        println!(\"Drawing a circle\");\n    }\n}\n\nimpl Drawable for Square {\n    fn draw(&self) {\n        println!(\"Drawing a square\");\n    }\n}\n\nfn render(items: Vec<Box<dyn Drawable>>) {\n    for item in items {\n        item.draw();\n    }\n}"
+    }
+  },
+  {
+    "id": 20,
+    "title": "Working with Generics and Where Clauses",
+    "date": "2024-05-06",
+    "summary": "Write flexible, reusable code with Rust's generics system",
+    "content": [
+      "Generics allow you to write functions, structs, and enums that work with any type, without code duplication.",
+      "You can constrain generic types using trait bounds to ensure they support certain operations.",
+      "The `where` clause improves readability when dealing with complex bounds or multiple generic parameters.",
+      "Generics in Rust are zero-cost — they are monomorphized at compile time into specialized versions."
+    ],
+    "code": {
+      "language": "rust",
+      "content": "struct Point<T> {\n    x: T,\n    y: T,\n}\n\nimpl<T> Point<T> {\n    fn new(x: T, y: T) -> Self {\n        Point { x, y }\n    }\n}\n\n// Function with trait bounds\nfn print_if_display<T: std::fmt::Display>(value: &T) {\n    println!(\"Value: {}\", value);\n}\n\n// Using 'where' for clarity\nfn compare_and_print<T, U>(a: T, b: U) -> bool\nwhere\n    T: std::cmp::PartialOrd + std::fmt::Display,\n    U: std::cmp::PartialOrd + std::fmt::Display,\n{\n    if a > b {\n        println!(\"{} is greater\", a);\n        true\n    } else {\n        println!(\"{} is not greater\", a);\n        false\n    }\n}"
+    }
+  }
+
+      ]
+    }
+  </script>
+
+  <script type="application/json" id="profileData">
+    {
+      "profile": {
+        "name": "Alex Johnson",
+        "tagline": "Full Stack Developer",
+        "role": "Senior Software Engineer",
+        "experience": "building scalable web applications",
+        "skills": ["JavaScript/TypeScript", "Vue.js/React", "Node.js/Python", "AWS/Cloud Architecture"],
+        "contact": {
+          "email": "alex.johnson@example.com",
+          "github": "john_doe",
+          "twitter_x": "john_doe"
+        }
+      }
+    }
+  </script>
+
+
+
+  <div id="app">
+    <header>
+      <h1>{{ profile.name }}</h1>
+      <p>{{ profile.tagline }}</p>
+    </header>
+    <nav>
+      <a @click="currentView = 'home'" :class="{ 'router-link-active': currentView === 'home' }">Home</a>
+      <a @click="currentView = 'python'" :class="{ 'router-link-active':
+          currentView === 'python' }">Python</a>
+      <a @click="currentView = 'javascript'" :class="{ 'router-link-active':
+          currentView === 'javascript' }">JavaScript</a>
+      <a @click="currentView = 'rust'" :class="{ 'router-link-active':
+          currentView === 'rust' }">Rust</a>
+    </nav>
+    <main>
+      <div v-if="currentView === 'home'" class="view">
+        <h2>Welcome</h2>
+        <p>I'm passionate about {{ profile.experience }}.</p>
+
+
+        <h2>About Me</h2>
+        <p>{{ profile.role }} with experience in {{ profile.experience }}.</p>
+        <h2>Skills</h2>
+        <div class="skills-container">
+          <div v-for="skill in profile.skills" :key="skill" class="skill-chip">{{ skill }}</div>
+        </div>
+
+        <h2>Contact</h2>
+        <p>Email: {{ profile.contact.email }}</p>
+        <p>Github: {{ profile.contact.github }}</p>
+        <p>Twitter/X: {{ profile.contact.twitter_x }}</p>
+
+      </div>
+      <div v-if="currentView === 'python'" class="view">
+        <h2>Python Articles</h2>
+        <div v-for="post in pythonBlog" :key="post.id" class="blog-post" @click="viewPost('python', post.id)">
+          <h3>{{ post.title }}</h3>
+          <p>{{ post.summary }}</p>
+          <small>{{ formatDate(post.date) }}</small>
+        </div>
+      </div>
+
+      <div v-if="currentView === 'javascript'" class="view">
+        <h2>Javascript Articles</h2>
+        <div v-for="post in javascriptBlog" :key="post.id" class="blog-post" @click="viewPost('javascript', post.id)">
+          <h3>{{ post.title }}</h3>
+          <p>{{ post.summary }}</p>
+          <small>{{ formatDate(post.date) }}</small>
+        </div>
+      </div>
+      <div v-if="currentView === 'rust'" class="view">
+        <h2>Rust Articles</h2>
+        <div v-for="post in rustBlog" :key="post.id" class="blog-post" @click="viewPost('rust', post.id)">
+          <h3>{{ post.title }}</h3>
+          <p>{{ post.summary }}</p>
+          <small>{{ formatDate(post.date) }}</small>
+        </div>
+      </div>
+
+      <!-- RENDER ARTICLE-->
+
+      <div v-if="currentView === 'post'" class="view">
+        <h2>{{ currentPost.title }}</h2>
+        <div class="article-date">by {{ profile.name }} at {{ formatDate(currentPost.date) }}</div>
+        <p v-for="(paragraph, index) in currentPost.content" :key="index">{{ paragraph }}</p>
+        <div v-if="currentPost.code" class="code-block">
+          <div class="code-language">{{ currentPost.code.language }}</div>
+          <pre><code :class="'language-' + currentPost.code.language">{{ currentPost.code.content }}</code></pre>
+        </div>
+        <div v-if="currentPost.diagram" class="mermaid" :id="'diagram-' + currentPost.id">
+          {{ currentPost.diagram.content }}
+        </div>
+      </div>
+
+
+    </main>
+    <footer>
+      <button id="btn-scroll2top" @click="scroll2Top" style="width: 100%;">
+        ↑ Top
+      </button>
+    </footer>
+  </div>
+
+  <script>
+    const {createApp, ref, onMounted, nextTick, watchEffect} = Vue;
+
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: 'dark',
+      themeVariables: {
+        primaryColor: '#6b7280',
+        primaryTextColor: '#d1d5db',
+        primaryBorderColor: '#6b7280',
+        lineColor: '#9ca3af',
+        background: '#374151',
+        mainBkg: '#374151',
+        secondBkg: '#4b5563'
+      }
+    });
+
+    const urlHelper = {
+      getQuery(key) {
+        const params = new URLSearchParams(window.location.search);
+        return params.get(key);
+      },
+
+      setQuery(paramsObj) {
+        const params = new URLSearchParams(window.location.search);
+
+        Object.entries(paramsObj).forEach(([key, value]) => {
+          if (value === null || value === undefined || value === '') {
+            params.delete(key);
+          } else {
+            params.set(key, value);
+          }
+        });
+
+        const newUrl = window.location.pathname + '?' + params.toString();
+        window.history.pushState({}, '', newUrl);
+      },
+
+      removeQuery(key) {
+        this.setQuery({[key]: null});
+      }
+    };
+
+    function slugify(str) {
+      return str
+        .toLowerCase()                   // Convert to lowercase
+        .trim()                         // Remove whitespace from both ends
+        .replace(/[^\w\s-]/g, '')       // Remove all non-word chars (letters, numbers, underscores)
+        .replace(/[\s_-]+/g, '-')       // Replace spaces, underscores and hyphens with a single hyphen
+        .replace(/^-+|-+$/g, '');       // Remove leading/trailing hyphens
+    }
+
+
+    createApp({
+      setup() {
+
+        const getJson = (id) => {
+          return JSON.parse(document.getElementById(id).textContent)
+        }
+
+        const profile = ref(getJson('profileData').profile);
+        const pythonBlog = ref(getJson('pythonBlog').posts);
+        const javascriptBlog = ref(getJson('javascriptBlog').posts);
+        const rustBlog = ref(getJson('rustBlog').posts);
+
+        const currentView = ref('home');
+        const currentPost = ref(null);
+        const sourceBlog = ref([])
+
+        const viewPost = async (sourceStr, postId) => {
+          switch (sourceStr) {
+            case 'python':
+              sourceBlog.value = pythonBlog.value; break;
+            case 'javascript':
+              sourceBlog.value = javascriptBlog.value; break;
+            case 'rust':
+              sourceBlog.value = rustBlog.value; break;
+            default: null;
+          }
+
+          const selectedPost = sourceBlog?.value.find(post => post.id === postId);
+          const articleSlug = slugify(selectedPost.title)
+          urlHelper.setQuery({article: articleSlug})
+
+          currentPost.value = selectedPost;
+          currentView.value = 'post';
+          await nextTick();
+          if (currentPost.value.code) {
+            Prism.highlightAll();
+          }
+          if (currentPost.value.diagram) {
+            const diagramId = `diagram-${currentPost.value.id}`;
+            const element = document.getElementById(diagramId);
+            if (element) {
+              try {
+                element.innerHTML = currentPost.value.diagram.content;
+                mermaid.init(undefined, element);
+              } catch (error) {
+                console.error('Mermaid rendering error:', error);
+                element.innerHTML = '<p style="color: #ef4444;">Error rendering diagram.</p>';
+              }
+            }
+          }
+        };
+
+        const formatDate = (dateString) => {
+          return new Date(dateString).toLocaleDateString('en-US', {year: 'numeric', month: 'long', day: 'numeric'});
+        };
+
+
+
+        const initArticle = ref([])
+
+        onMounted(() => {
+          Prism.highlightAll();
+
+          const initViewQ = urlHelper.getQuery('view')
+          const initArticleQ = urlHelper.getQuery('article')
+          currentView.value = initViewQ;
+
+          if (currentView.value === 'python') {
+            initArticle.value = pythonBlog.value
+          }
+          if (currentView.value === 'javascript') {
+            initArticle.value = javascriptBlog.value
+          }
+          if (currentView.value === 'rust') {
+            initArticle.value = rustBlog.value
+          }
+
+          initArticle.value.map(item => {
+            const slugArticle = slugify(item.title);
+            if (slugArticle === urlHelper.getQuery('article')) {
+              // set article view
+              currentPost.value = item
+              currentView.value = 'post';
+            }
+          })
+
+        });
+
+
+        const syncArticle = () => {
+          switch (currentView.value) {
+            case 'python':
+              urlHelper.setQuery({view: 'python'}); break;
+            case 'javascript':
+              urlHelper.setQuery({view: 'javascript'}); break;
+            case 'rust':
+              urlHelper.setQuery({view: 'rust'}); break;
+            default: null;
+          }
+        }
+
+        watchEffect(() => syncArticle())
+
+
+        const actionBack = (view) => {
+          currentView.value = urlHelper.getQuery('view')
+          console.log(currentView.value)
+        }
+
+        const scroll2Top = () => {
+          document.documentElement.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+          });
+        };
+        return {
+          profile,
+          pythonBlog,
+          javascriptBlog,
+          rustBlog,
+          currentView,
+          currentPost,
+          viewPost,
+          formatDate,
+          actionBack,
+          scroll2Top
+        };
+      }
+    }).mount('#app');
+  </script>
+</body>
+
+</html>
