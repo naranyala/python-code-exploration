@@ -6,11 +6,11 @@ def load_html_file(file_path):
         # Verify the file exists
         if not os.path.exists(file_path):
             raise FileNotFoundError(f"HTML file not found at: {file_path}")
-            
+
         # Read the file
         with open(file_path, 'r', encoding='utf-8') as file:
             return file.read()
-            
+
     except Exception as e:
         print(f"Error loading HTML file: {e}")
         # Fallback HTML

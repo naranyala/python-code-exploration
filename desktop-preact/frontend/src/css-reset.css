@@ -1,0 +1,251 @@
+/* Box Sizing Reset */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* Remove default margin and padding */
+html,
+body,
+div,
+span,
+applet,
+object,
+iframe,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+blockquote,
+pre,
+a,
+abbr,
+acronym,
+address,
+big,
+cite,
+code,
+del,
+dfn,
+em,
+img,
+ins,
+kbd,
+q,
+s,
+samp,
+small,
+strike,
+strong,
+sub,
+sup,
+tt,
+var,
+b,
+u,
+i,
+center,
+dl,
+dt,
+dd,
+ol,
+ul,
+li,
+fieldset,
+form,
+label,
+legend,
+table,
+caption,
+tbody,
+tfoot,
+thead,
+tr,
+th,
+td,
+article,
+aside,
+canvas,
+details,
+embed,
+figure,
+figcaption,
+footer,
+header,
+hgroup,
+menu,
+nav,
+output,
+ruby,
+section,
+summary,
+time,
+mark,
+audio,
+video {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-size: 100%;
+  font: inherit;
+  vertical-align: baseline;
+}
+
+/* HTML5 display-role reset for older browsers */
+article,
+aside,
+details,
+figcaption,
+figure,
+footer,
+header,
+hgroup,
+menu,
+nav,
+section {
+  display: block;
+}
+
+/* Set a default line-height and font-family for the body */
+body {
+  line-height: 1;
+  font-family: sans-serif;
+  /* A sensible default, can be overridden */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Remove list styles (bullets/numbers) */
+ol,
+ul {
+  list-style: none;
+}
+
+/* Blockquote and q element resets */
+blockquote,
+q {
+  quotes: none;
+}
+
+blockquote::before,
+blockquote::after,
+q::before,
+q::after {
+  content: '';
+  content: none;
+}
+
+/* Table resets */
+table {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+/* Form element resets */
+button,
+input,
+optgroup,
+select,
+textarea {
+  font-family: inherit;
+  /* Inherit font from body */
+  font-size: 100%;
+  /* Corrects font size not being inherited in some browsers */
+  line-height: 1.15;
+  /* Corrects line height not being inherited in some browsers */
+  margin: 0;
+  /* Remove default margin */
+}
+
+/* Remove button default styling */
+button {
+  background: transparent;
+  padding: 0;
+  border: none;
+  cursor: pointer;
+}
+
+/* Anchor tag resets */
+a {
+  text-decoration: none;
+  color: inherit;
+  /* Inherit color from parent */
+}
+
+/* Image resets */
+img {
+  display: block;
+  /* Remove extra space below images */
+  max-width: 100%;
+  height: auto;
+}
+
+/* Media elements */
+audio,
+video {
+  display: inline-block;
+  /* Corrects `display` not being set in IE 9-11. */
+}
+
+/* Text-level semantics */
+abbr[title] {
+  border-bottom: none;
+  /* Removes the border on abbr elements in IE 8-10. */
+  text-decoration: underline;
+  /* Add the correct text decoration in Chrome, Edge, IE, Opera, and Safari. */
+  text-decoration: underline dotted;
+}
+
+b,
+strong {
+  font-weight: bolder;
+  /* Add the correct font weight in Chrome, Edge, and Safari. */
+}
+
+code,
+kbd,
+samp {
+  font-family: monospace, monospace;
+  /* Correct the inheritance and scaling of font size in all browsers. */
+  font-size: 1em;
+  /* Correct the inheritance and scaling of font size in all browsers. */
+}
+
+small {
+  font-size: 80%;
+  /* Add the correct font size in all browsers. */
+}
+
+sub,
+sup {
+  font-size: 75%;
+  /* Prevent `sub` and `sup` elements from affecting the line height in all browsers. */
+  line-height: 0;
+  position: relative;
+  vertical-align: baseline;
+}
+
+sub {
+  bottom: -0.25em;
+}
+
+sup {
+  top: -0.5em;
+}
+
+/* Accessibility and focus */
+[hidden] {
+  display: none;
+  /* Add the correct display in IE 10. */
+}
+
+/* Focus outline for keyboard navigation */
+:focus-visible {
+  outline: 2px solid currentColor;
+  /* Use currentColor for better theme integration */
+  outline-offset: 2px;
+}
