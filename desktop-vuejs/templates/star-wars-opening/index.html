@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <title>Star Wars Opening Crawl</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Franklin+Gothic+Medium:wght@400;700&display=swap');
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #000;
+      overflow: hidden;
+      font-family: 'Franklin Gothic Medium', Arial, sans-serif;
+      height: 100vh;
+      perspective: 200px;
+    }
+
+    /* Starfield Background */
+    .starfield {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #000;
+    }
+
+    .star {
+      position: absolute;
+      background: white;
+      border-radius: 50%;
+      animation: twinkle 3s infinite alternate;
+    }
+
+    .star.small {
+      width: 1px;
+      height: 1px;
+    }
+
+    .star.medium {
+      width: 2px;
+      height: 2px;
+    }
+
+    .star.large {
+      width: 3px;
+      height: 3px;
+    }
+
+    @keyframes twinkle {
+      0% {
+        opacity: 0.3;
+      }
+
+      100% {
+        opacity: 1;
+      }
+    }
+
+    /* Opening Text */
+    .opening-text {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: #4bd5ee;
+      font-size: 1.2em;
+      text-align: center;
+      opacity: 0;
+      animation: fadeInOut 6s ease-in-out;
+    }
+
+    @keyframes fadeInOut {
+      0% {
+        opacity: 0;
+      }
+
+      20% {
+        opacity: 1;
+      }
+
+      80% {
+        opacity: 1;
+      }
+
+      100% {
+        opacity: 0;
+      }
+    }
+
+    /* Star Wars Logo - REMOVED */
+
+    /* Main Crawl Container */
+    .crawl-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .crawl {
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      width: 120%;
+      max-width: 1200px;
+      transform: translate(-50%, 0) rotateX(55deg) translateZ(-100px);
+      transform-origin: 50% 100%;
+      color: #ffe300;
+      text-align: justify;
+      font-size: 2.2em;
+      line-height: 1.8;
+      opacity: 0;
+      animation: crawlUp 25s linear 4s forwards;
+      text-shadow: 0 0 8px rgba(255, 227, 0, 0.6);
+      perspective: 800px;
+    }
+
+    @keyframes crawlUp {
+      0% {
+        opacity: 0;
+        top: 100%;
+        transform: translate(-50%, 0) rotateX(55deg) translateZ(-100px) scale(1);
+      }
+
+      3% {
+        opacity: 1;
+      }
+
+      85% {
+        opacity: 1;
+        transform: translate(-50%, 0) rotateX(55deg) translateZ(50px) scale(0.7);
+      }
+
+      100% {
+        opacity: 0;
+        top: -200%;
+        transform: translate(-50%, 0) rotateX(55deg) translateZ(200px) scale(0.3);
+      }
+    }
+
+    .crawl h1 {
+      font-size: 2.2em;
+      text-align: center;
+      margin-bottom: 2em;
+      font-weight: bold;
+      letter-spacing: 0.15em;
+      transform: translateZ(20px);
+    }
+
+    .crawl p {
+      margin-bottom: 2em;
+      text-indent: 3em;
+      transform: translateZ(0px);
+    }
+
+    /* Fade effects for top and bottom */
+    .fade-top,
+    .fade-bottom {
+      position: absolute;
+      left: 0;
+      width: 100%;
+      height: 300px;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    .fade-top {
+      top: 0;
+      background: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, 0.9) 30%, rgba(0, 0, 0, 0.5) 70%, transparent 100%);
+    }
+
+    .fade-bottom {
+      bottom: 0;
+      background: linear-gradient(to top, #000 0%, rgba(0, 0, 0, 0.8) 50%, transparent 100%);
+    }
+
+    /* Control Panel */
+    .controls {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      z-index: 20;
+    }
+
+    .controls button {
+      background: rgba(255, 227, 0, 0.2);
+      border: 1px solid #ffe300;
+      color: #ffe300;
+      padding: 8px 16px;
+      margin: 0 5px;
+      cursor: pointer;
+      border-radius: 4px;
+      font-family: inherit;
+    }
+
+    .controls button:hover {
+      background: rgba(255, 227, 0, 0.4);
+    }
+  </style>
+</head>
+
+<body>
+  <div id="app">
+    <!-- Starfield -->
+    <div class="starfield" ref="starfield"></div>
+
+    <!-- Opening text -->
+    <div class="opening-text" v-if="showOpening">
+      A long time ago in a galaxy<br>
+      far, far away....
+    </div>
+
+    <!-- Main crawl -->
+    <div class="crawl-container">
+      <div class="crawl" v-if="showCrawl">
+        <h1>{{ episode.number }}<br>{{ episode.title }}</h1>
+        <p v-for="(paragraph, index) in episode.text" :key="index">
+          {{ paragraph }}
+        </p>
+      </div>
+    </div>
+
+    <!-- Fade effects -->
+    <div class="fade-top"></div>
+    <div class="fade-bottom"></div>
+
+    <!-- Controls -->
+    <div class="controls">
+      <button @click="restart">Restart</button>
+      <button @click="togglePause">{{ paused ? 'Resume' : 'Pause' }}</button>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.4.21/vue.global.prod.min.js"></script>
+  <script>
+    const {createApp} = Vue;
+
+    createApp({
+      data() {
+        return {
+          showOpening: true,
+          showLogo: false,
+          showCrawl: false,
+          paused: false,
+          episode: {
+            number: "Episode IV",
+            title: "A NEW HOPE",
+            text: [
+              "It is a period of civil war. Rebel spaceships, striking from a hidden base, have won their first victory against the evil Galactic Empire.",
+              "During the battle, Rebel spies managed to steal secret plans to the Empire's ultimate weapon, the DEATH STAR, an armored space station with enough power to destroy an entire planet.",
+              "Pursued by the Empire's sinister agents, Princess Leia races home aboard her starship, custodian of the stolen plans that can save her people and restore freedom to the galaxy...."
+            ]
+          },
+          stars: []
+        };
+      },
+      mounted() {
+        this.generateStars();
+        this.startSequence();
+      },
+      methods: {
+        generateStars() {
+          const starfield = this.$refs.starfield;
+          const starCount = 150;
+
+          for (let i = 0; i < starCount; i++) {
+            const star = document.createElement('div');
+            star.className = 'star';
+
+            // Random size
+            const sizes = ['small', 'medium', 'large'];
+            const weights = [0.7, 0.25, 0.05]; // More small stars
+            const randomSize = this.weightedRandom(sizes, weights);
+            star.classList.add(randomSize);
+
+            // Random position
+            star.style.left = Math.random() * 100 + '%';
+            star.style.top = Math.random() * 100 + '%';
+
+            // Random animation delay for twinkling
+            star.style.animationDelay = Math.random() * 3 + 's';
+
+            starfield.appendChild(star);
+            this.stars.push(star);
+          }
+        },
+
+        weightedRandom(items, weights) {
+          const cumulativeWeights = [];
+          for (let i = 0; i < weights.length; i++) {
+            cumulativeWeights[i] = weights[i] + (cumulativeWeights[i - 1] || 0);
+          }
+          const randomNum = Math.random() * cumulativeWeights[cumulativeWeights.length - 1];
+          for (let i = 0; i < cumulativeWeights.length; i++) {
+            if (randomNum < cumulativeWeights[i]) {
+              return items[i];
+            }
+          }
+        },
+
+        startSequence() {
+          // Opening text appears immediately
+          this.showOpening = true;
+
+          // Hide opening text and start crawl after 4 seconds
+          setTimeout(() => {
+            this.showOpening = false;
+            this.showCrawl = true;
+          }, 4000);
+        },
+
+        restart() {
+          // Reset all states
+          this.showOpening = false;
+          this.showLogo = false;
+          this.showCrawl = false;
+          this.paused = false;
+
+          // Remove any existing animation pauses
+          document.body.style.animationPlayState = 'running';
+
+          // Start sequence again
+          setTimeout(() => this.startSequence(), 100);
+        },
+
+        togglePause() {
+          this.paused = !this.paused;
+          const playState = this.paused ? 'paused' : 'running';
+          document.body.style.animationPlayState = playState;
+
+          // Apply to all animated elements
+          const animatedElements = document.querySelectorAll('.opening-text, .logo, .crawl, .star');
+          animatedElements.forEach(el => {
+            el.style.animationPlayState = playState;
+          });
+        }
+      }
+    }).mount('#app');
+  </script>
+</body>
+
+</html>

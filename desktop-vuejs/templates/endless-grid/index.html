@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8" />
+  <title>3D Infinite Grid Tunnel</title>
+  <style>
+    body {
+      margin: 0;
+      background: #000;
+      overflow: hidden;
+    }
+
+    canvas {
+      display: block;
+    }
+  </style>
+</head>
+
+<body>
+  <canvas id="canvas"></canvas>
+
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+
+    let width, height, centerX, centerY;
+
+    function resizeCanvas() {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+      centerX = width / 2;
+      centerY = height / 2;
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    let offset = 0;
+    const speed = 3;
+    const gridSize = 50;
+    const focalLength = 300;
+
+    // Project 3D point to 2D screen
+    function project3D(x, y, z) {
+      const scale = focalLength / (focalLength + z);
+      return {
+        x: centerX + x * scale,
+        y: centerY + y * scale,
+        scale: scale
+      };
+    }
+
+    function drawGridLine(x1, y1, z1, x2, y2, z2, alpha = 1) {
+      const p1 = project3D(x1, y1, z1);
+      const p2 = project3D(x2, y2, z2);
+
+      // Skip if behind camera
+      if (z1 <= 0 || z2 <= 0) return;
+
+      ctx.globalAlpha = alpha;
+      ctx.beginPath();
+      ctx.moveTo(p1.x, p1.y);
+      ctx.lineTo(p2.x, p2.y);
+      ctx.stroke();
+    }
+
+    function animate() {
+      ctx.clearRect(0, 0, width, height);
+      ctx.strokeStyle = '#00ff00';
+      ctx.lineWidth = 1;
+
+      const maxZ = 800;
+      const minZ = 20;
+
+      // Animated offset for infinite scrolling
+      const animOffset = offset % gridSize;
+
+      // Draw horizontal grid lines
+      for (let z = minZ; z < maxZ; z += gridSize) {
+        const currentZ = z - animOffset;
+        if (currentZ <= 0) continue;
+
+        const alpha = Math.max(0.1, 1 - (currentZ - minZ) / (maxZ - minZ));
+        const gridWidth = 400;
+
+        // Top grid (ceiling)
+        drawGridLine(-gridWidth, -200, currentZ, gridWidth, -200, currentZ, alpha);
+
+        // Bottom grid (floor)
+        drawGridLine(-gridWidth, 200, currentZ, gridWidth, 200, currentZ, alpha);
+      }
+
+      // Draw vertical grid lines (going into distance)
+      for (let x = -400; x <= 400; x += gridSize) {
+        if (x === 0) continue;
+
+        const alpha = Math.max(0.3, 1 - Math.abs(x) / 400);
+
+        // Top grid verticals
+        drawGridLine(x, -200, minZ, x, -200, maxZ, alpha);
+
+        // Bottom grid verticals
+        drawGridLine(x, 200, minZ, x, 200, maxZ, alpha);
+      }
+
+      // Draw perspective lines connecting top and bottom
+      for (let x = -400; x <= 400; x += gridSize * 2) {
+        if (x === 0) continue;
+
+        const alpha = Math.max(0.2, 1 - Math.abs(x) / 400);
+
+        for (let z = minZ; z < maxZ; z += gridSize * 3) {
+          const currentZ = z - animOffset;
+          if (currentZ <= 0) continue;
+
+          drawGridLine(x, -200, currentZ, x, 200, currentZ, alpha * 0.5);
+        }
+      }
+
+      // Draw center vanishing point
+      ctx.globalAlpha = 0.8;
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, 2, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.globalAlpha = 1;
+      offset += speed;
+      requestAnimationFrame(animate);
+    }
+
+    animate();
+  </script>
+</body>
+
+</html>
