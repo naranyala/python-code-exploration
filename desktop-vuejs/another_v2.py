@@ -40,12 +40,14 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 # html_source = "./templates/chart-demo-1/index.html"
 # html_source = "./templates/chart-demo-2/index.html"
 # html_source = "./templates/io-jobportal/index.html"
-# html_source = "./templates/io-jobportal2/index.html"
+html_source = "./templates/io-jobportal2/index.html"
 # html_source = "./templates/docs-python/index.html"
 # html_source = "./templates/todo-app/index.html"
 # html_source = "./templates/studio/index.html"
 # html_source = "./templates/endless-grid/index.html"
-html_source = "./templates/star-wars-opening/index.html"
+# html_source = "./templates/star-wars-opening/index.html"
+# html_source = "./templates/lyrics-editor/index.html"
+# html_source = "./templates/lyrics-editor2/index.html"
 
 html_file_path = os.path.join(current_dir, html_source)
 

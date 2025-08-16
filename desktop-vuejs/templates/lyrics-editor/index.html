@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Smooth Canvas Lyrics Player</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #121212;
+      color: white;
+      font-family: 'Arial', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      flex-direction: column;
+    }
+
+    #app {
+      width: 100%;
+      max-width: 600px;
+      text-align: center;
+    }
+
+    canvas {
+      border: 1px solid #333;
+      border-radius: 8px;
+      background-color: #1e1e1e;
+      width: 100%;
+      height: 300px;
+    }
+
+    .controls {
+      margin-top: 20px;
+    }
+
+    button {
+      padding: 10px 15px;
+      margin: 0 5px;
+      font-size: 16px;
+      cursor: pointer;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="app">
+    <h2>Smooth Lyrics Scroll</h2>
+    <canvas ref="canvas" id="lyricsCanvas"></canvas>
+    <div class="controls">
+      <button @click="play">Play</button>
+      <button @click="pause">Pause</button>
+      <button @click="reset">Reset</button>
+    </div>
+  </div>
+
+  <!-- Load Vue 3 from CDN -->
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script>
+    const {createApp, ref, onMounted, onUnmounted} = Vue;
+
+    createApp({
+      setup() {
+        const canvas = ref(null);
+        let animationId = null;
+        let scrollOffset = 0;
+        let isPlaying = true;
+        const speed = 1.2; // Smooth pixels per frame
+
+        const lines = [
+          "Welcome to the smooth lyrics player",
+          "This version scrolls all lines continuously",
+          "No gaps, no jumps — just fluid motion",
+          "Perfect for music visualizers",
+          "Built with Vue 3 and HTML5 Canvas",
+          "Enjoy the seamless animation",
+          "You can extend this with timing sync",
+          "Or connect it to real audio playback",
+          "Thanks for watching!"
+        ];
+
+        const lineHeight = 42;
+        const fontSize = 24;
+
+        // Initialize canvas
+        const initCanvas = () => {
+          const c = canvas.value;
+          if (!c) return;
+          const dpr = window.devicePixelRatio || 1;
+          c.width = c.offsetWidth * dpr;
+          c.height = c.offsetHeight * dpr;
+          const ctx = c.getContext('2d');
+          ctx.scale(dpr, dpr);
+          ctx.font = `${fontSize}px Arial`;
+          ctx.textAlign = 'center';
+        };
+
+        // Draw all lyrics as a continuous scroll
+        const draw = () => {
+          const c = canvas.value;
+          if (!c) return;
+          const width = c.clientWidth;
+          const height = c.clientHeight;
+          const ctx = c.getContext('2d');
+
+          // Clear
+          ctx.clearRect(0, 0, width, height);
+
+          // Draw each line in sequence, positioned by scrollOffset
+          lines.forEach((line, index) => {
+            const y = (index + 1) * lineHeight - scrollOffset;
+            if (y < -lineHeight || y > height + lineHeight) return;
+
+            // Highlight center line
+            const center = height / 2;
+            const lineY = y;
+            const distance = Math.abs(lineY - center);
+            if (distance < lineHeight) {
+              const alpha = 1 - distance / lineHeight;
+              ctx.fillStyle = `rgba(255, 223, 0, ${Math.max(alpha, 0.6)})`;
+              ctx.font = `${fontSize + 4}px Arial`;
+            } else {
+              ctx.fillStyle = '#ccc';
+              ctx.font = `${fontSize}px Arial`;
+            }
+
+            ctx.fillText(line, width / 2, y);
+          });
+        };
+
+        const animate = () => {
+          if (!isPlaying) return;
+
+          scrollOffset += speed; // Move up (positive = upward scroll in layout)
+          const c = canvas.value;
+          const totalHeight = lines.length * lineHeight;
+          const buffer = c.clientHeight;
+
+          // Optional: Loop when all lines have passed
+          if (scrollOffset > totalHeight + buffer) {
+            scrollOffset = 0; // Reset to loop
+          }
+
+          draw();
+          animationId = requestAnimationFrame(animate);
+        };
+
+        const play = () => {
+          if (!isPlaying) {
+            isPlaying = true;
+            animate();
+          }
+        };
+
+        const pause = () => {
+          isPlaying = false;
+          if (animationId) {
+            cancelAnimationFrame(animationId);
+            animationId = null;
+          }
+        };
+
+        const reset = () => {
+          pause();
+          scrollOffset = 0;
+          initCanvas();
+          draw();
+          play();
+        };
+
+        onMounted(() => {
+          initCanvas();
+          draw(); // Initial draw
+          animate(); // Start animation
+
+          window.addEventListener('resize', () => {
+            initCanvas();
+            draw();
+          });
+        });
+
+        onUnmounted(() => {
+          window.removeEventListener('resize', initCanvas);
+          if (animationId) cancelAnimationFrame(animationId);
+        });
+
+        return {canvas, play, pause, reset};
+      }
+    }).mount('#app');
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>English Learning Timeline</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0a0a0a;
+      margin: 0;
+      padding: 40px 20px;
+      color: #e5e5e5;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 700px;
+      margin: 0 auto;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 50px;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      font-weight: 600;
+      margin: 0 0 8px 0;
+      color: #ffffff;
+      letter-spacing: -0.5px;
+    }
+
+    .subtitle {
+      font-size: 1rem;
+      color: #888;
+      margin: 0;
+    }
+
+    .progress {
+      width: 100%;
+      height: 2px;
+      background: #333;
+      border-radius: 1px;
+      overflow: hidden;
+      margin: 30px 0 10px 0;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: #00ff88;
+      transition: width 0.4s ease;
+    }
+
+    .progress-text {
+      text-align: center;
+      font-size: 0.85rem;
+      color: #666;
+      margin-bottom: 40px;
+    }
+
+    .timeline {
+      position: relative;
+    }
+
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 12px;
+      top: 0;
+      bottom: 0;
+      width: 1px;
+      background: #333;
+    }
+
+    .step {
+      position: relative;
+      margin: 0 0 30px 0;
+      opacity: 0;
+      transform: translateY(20px);
+      animation: fadeIn 0.3s ease forwards;
+    }
+
+    .step:nth-child(1) { animation-delay: 0.1s; }
+    .step:nth-child(2) { animation-delay: 0.15s; }
+    .step:nth-child(3) { animation-delay: 0.2s; }
+    .step:nth-child(4) { animation-delay: 0.25s; }
+    .step:nth-child(5) { animation-delay: 0.3s; }
+    .step:nth-child(6) { animation-delay: 0.35s; }
+
+    .step-dot {
+      position: absolute;
+      left: 8px;
+      top: 8px;
+      width: 9px;
+      height: 9px;
+      background: #555;
+      border: 2px solid #0a0a0a;
+      border-radius: 50%;
+      transition: all 0.2s ease;
+      z-index: 10;
+    }
+
+    .step.completed .step-dot {
+      background: #00ff88;
+    }
+
+    .step:hover .step-dot {
+      transform: scale(1.3);
+    }
+
+    .step-content {
+      margin-left: 35px;
+      cursor: pointer;
+    }
+
+    .step-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .step h3 {
+      margin: 0;
+      font-size: 1.1rem;
+      font-weight: 500;
+      color: #fff;
+      transition: color 0.2s ease;
+    }
+
+    .step.completed h3 {
+      color: #888;
+    }
+
+    .step p {
+      margin: 0 0 12px 0;
+      color: #999;
+      font-size: 0.9rem;
+    }
+
+    .step.completed p {
+      color: #666;
+    }
+
+    .toggle-btn {
+      background: none;
+      border: none;
+      color: #666;
+      font-size: 0.8rem;
+      cursor: pointer;
+      padding: 0;
+      transition: color 0.2s ease;
+    }
+
+    .toggle-btn:hover {
+      color: #00ff88;
+    }
+
+    .mark-done-btn {
+      background: #222;
+      color: #fff;
+      border: 1px solid #333;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      margin-top: 8px;
+    }
+
+    .mark-done-btn:hover {
+      background: #333;
+      border-color: #555;
+    }
+
+    .mark-done-btn:disabled {
+      background: #00ff88;
+      border-color: #00ff88;
+      color: #000;
+      cursor: not-allowed;
+      font-weight: 500;
+    }
+
+    .subtasks {
+      margin: 15px 0 0 0;
+      padding-left: 20px;
+      border-left: 1px solid #2a2a2a;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .subtasks.collapsed {
+      max-height: 0;
+      margin-top: 0;
+      opacity: 0;
+    }
+
+    .subtasks.expanded {
+      max-height: 500px;
+      opacity: 1;
+    }
+
+    .subtask {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 8px 0;
+      font-size: 0.85rem;
+    }
+
+    .subtask-checkbox {
+      width: 12px;
+      height: 12px;
+      border: 1px solid #555;
+      border-radius: 2px;
+      cursor: pointer;
+      position: relative;
+      transition: all 0.2s ease;
+    }
+
+    .subtask-checkbox.checked {
+      background: #00ff88;
+      border-color: #00ff88;
+    }
+
+    .subtask-checkbox.checked::after {
+      content: '✓';
+      position: absolute;
+      top: -2px;
+      left: 1px;
+      font-size: 10px;
+      color: #000;
+      font-weight: bold;
+    }
+
+    .subtask-text {
+      color: #bbb;
+      transition: color 0.2s ease;
+    }
+
+    .subtask-checkbox.checked + .subtask-text {
+      color: #666;
+      text-decoration: line-through;
+    }
+
+    .completion-indicator {
+      font-size: 0.75rem;
+      color: #666;
+      margin-left: auto;
+    }
+
+    @keyframes fadeIn {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (max-width: 600px) {
+      body {
+        padding: 30px 15px;
+      }
+
+      h1 {
+        font-size: 2rem;
+      }
+
+      .step-content {
+        margin-left: 30px;
+      }
+
+      .subtasks {
+        padding-left: 15px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div class="container">
+      <div class="header">
+        <h1>English Learning</h1>
+        <p class="subtitle">Step-by-step mastery path</p>
+        
+        <div class="progress">
+          <div class="progress-fill" :style="{width: overallProgress + '%'}"></div>
+        </div>
+        <div class="progress-text">
+          {{ completedSteps }}/{{ totalSteps }} steps • {{ Math.round(overallProgress) }}% complete
+        </div>
+      </div>
+      
+      <div class="timeline">
+        <div v-for="(step, index) in steps" :key="index" class="step" :class="{completed: step.done}">
+          <div class="step-dot"></div>
+          <div class="step-content" @click="toggleSubtasks(index)">
+            <div class="step-header">
+              <h3>{{ step.title }}</h3>
+              <button v-if="step.subtasks" class="toggle-btn">
+                {{ step.expanded ? '−' : '+' }} {{ step.subtasks.length }}
+              </button>
+              <div v-if="step.subtasks" class="completion-indicator">
+                {{ getSubtaskProgress(step) }}/{{ step.subtasks.length }}
+              </div>
+            </div>
+            <p>{{ step.description }}</p>
+            <button 
+              @click.stop="markDone(index)" 
+              :disabled="step.done"
+              class="mark-done-btn"
+            >
+              {{ step.done ? '✓ Complete' : 'Mark Done' }}
+            </button>
+            
+            <div v-if="step.subtasks" 
+                 class="subtasks" 
+                 :class="{ expanded: step.expanded, collapsed: !step.expanded }">
+              <div v-for="(subtask, subIndex) in step.subtasks" 
+                   :key="subIndex" 
+                   class="subtask"
+                   @click.stop="toggleSubtask(index, subIndex)">
+                <div class="subtask-checkbox" :class="{ checked: subtask.done }"></div>
+                <span class="subtask-text">{{ subtask.title }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    const { createApp } = Vue;
+    createApp({
+      data() {
+        return {
+          steps: [
+            { 
+              title: "Learn the Alphabet", 
+              description: "Master English letters and sounds",
+              done: false,
+              expanded: false,
+              subtasks: [
+                { title: "Practice uppercase A-M", done: false },
+                { title: "Practice uppercase N-Z", done: false },
+                { title: "Practice lowercase a-m", done: false },
+                { title: "Practice lowercase n-z", done: false },
+                { title: "Learn letter sounds (phonics)", done: false }
+              ]
+            },
+            { 
+              title: "Basic Greetings", 
+              description: "Essential phrases for daily interaction",
+              done: false,
+              expanded: false,
+              subtasks: [
+                { title: "Hello, Hi, Good morning/afternoon/evening", done: false },
+                { title: "Goodbye, See you later, Take care", done: false },
+                { title: "Please, Thank you, You're welcome", done: false },
+                { title: "My name is..., Nice to meet you", done: false }
+              ]
+            },
+            { 
+              title: "Numbers 1–100", 
+              description: "Counting and number words",
+              done: false,
+              expanded: false,
+              subtasks: [
+                { title: "Numbers 1-20", done: false },
+                { title: "Tens: 20, 30, 40... 100", done: false },
+                { title: "Number combinations 21-99", done: false },
+                { title: "Basic math vocabulary (+, -, =)", done: false }
+              ]
+            },
+            { 
+              title: "Essential Vocabulary", 
+              description: "Everyday words and objects",
+              done: false,
+              expanded: false,
+              subtasks: [
+                { title: "Colors (red, blue, green...)", done: false },
+                { title: "Family members (mother, father...)", done: false },
+                { title: "Common objects (book, chair, phone...)", done: false },
+                { title: "Food and drinks", done: false },
+                { title: "Body parts and clothing", done: false }
+              ]
+            },
+            { 
+              title: "Basic Grammar", 
+              description: "Foundation sentence structure",
+              done: false,
+              expanded: false,
+              subtasks: [
+                { title: "Subject + Verb + Object", done: false },
+                { title: "Present tense 'to be' (am, is, are)", done: false },
+                { title: "Simple present tense verbs", done: false },
+                { title: "Question formation (What, Where, When)", done: false },
+                { title: "Articles: a, an, the", done: false }
+              ]
+            },
+            { 
+              title: "Simple Conversations", 
+              description: "Real-world dialogue practice",
+              done: false,
+              expanded: false,
+              subtasks: [
+                { title: "Ordering food at a restaurant", done: false },
+                { title: "Shopping and asking for prices", done: false },
+                { title: "Asking for directions", done: false },
+                { title: "Talking about weather", done: false },
+                { title: "Making small talk", done: false }
+              ]
+            }
+          ]
+        }
+      },
+      computed: {
+        totalSteps() {
+          return this.steps.length;
+        },
+        completedSteps() {
+          return this.steps.filter(step => step.done).length;
+        },
+        overallProgress() {
+          const mainSteps = this.completedSteps;
+          const totalSubtasks = this.steps.reduce((sum, step) => 
+            sum + (step.subtasks ? step.subtasks.length : 0), 0);
+          const completedSubtasks = this.steps.reduce((sum, step) => 
+            sum + (step.subtasks ? step.subtasks.filter(sub => sub.done).length : 0), 0);
+          
+          if (totalSubtasks === 0) return (mainSteps / this.totalSteps) * 100;
+          
+          return ((mainSteps * 2 + completedSubtasks) / (this.totalSteps * 2 + totalSubtasks)) * 100;
+        }
+      },
+      methods: {
+        markDone(index) {
+          this.steps[index].done = true;
+        },
+        toggleSubtasks(index) {
+          if (this.steps[index].subtasks) {
+            this.steps[index].expanded = !this.steps[index].expanded;
+          }
+        },
+        toggleSubtask(stepIndex, subtaskIndex) {
+          this.steps[stepIndex].subtasks[subtaskIndex].done = 
+            !this.steps[stepIndex].subtasks[subtaskIndex].done;
+        },
+        getSubtaskProgress(step) {
+          return step.subtasks ? step.subtasks.filter(sub => sub.done).length : 0;
+        }
+      }
+    }).mount("#app");
+  </script>
+</body>
+</html>

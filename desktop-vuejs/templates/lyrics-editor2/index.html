@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Canvas Lyrics Player - Continuous Scrolling</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      background: #121212;
+      color: #fff;
+      font-family: 'Arial', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .player-container {
+      background: #1e1e1e;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+      max-width: 600px;
+      width: 100%;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #1db954;
+    }
+
+    #lyricsCanvas {
+      width: 100%;
+      height: 400px;
+      background: #000;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
+
+    button {
+      background: #1db954;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background 0.3s;
+    }
+
+    button:hover {
+      background: #1ed760;
+    }
+
+    button:disabled {
+      background: #444;
+      cursor: not-allowed;
+    }
+
+    .progress-container {
+      margin-top: 15px;
+      text-align: center;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 6px;
+      background: #333;
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .progress {
+      height: 100%;
+      background: #1db954;
+      width: 0%;
+      transition: width 0.3s;
+    }
+
+    .time-display {
+      margin-top: 8px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 14px;
+      color: #aaa;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="app">
+    <div class="player-container">
+      <h1>Canvas Lyrics Player</h1>
+
+      <canvas id="lyricsCanvas"></canvas>
+
+      <div class="controls">
+        <button @click="togglePlay" :disabled="!lyrics.length">
+          {{ isPlaying ? 'Pause' : 'Play' }}
+        </button>
+        <button @click="reset" :disabled="!lyrics.length">
+          Reset
+        </button>
+      </div>
+
+      <div class="progress-container">
+        <div class="progress-bar">
+          <div class="progress" :style="{ width: progress + '%' }"></div>
+        </div>
+        <div class="time-display">
+          <span>{{ formatTime(currentTime) }}</span>
+          <span>{{ formatTime(duration) }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const {createApp} = Vue;
+
+    createApp({
+      data() {
+        return {
+          canvas: null,
+          ctx: null,
+          lyrics: [
+            {time: 0, text: "This is the first line of the song"},
+            {time: 3, text: "And here comes the second line"},
+            {time: 6, text: "Third line appears right on time"},
+            {time: 9, text: "Fourth line with some meaningful lyrics"},
+            {time: 12, text: "Fifth line continues the story"},
+            {time: 15, text: "Sixth line brings more emotion"},
+            {time: 18, text: "Seventh line nears the end"},
+            {time: 21, text: "Final line completes the song"}
+          ],
+          isPlaying: false,
+          currentTime: 0,
+          duration: 24, // Total duration in seconds
+          lineHeight: 50,
+          fontSize: 24,
+          animationId: null,
+          lastTime: 0,
+          scrollOffset: 0
+        };
+      },
+      computed: {
+        progress() {
+          return (this.currentTime / this.duration) * 100;
+        }
+      },
+      mounted() {
+        this.setupCanvas();
+        this.draw();
+      },
+      beforeUnmount() {
+        this.stopAnimation();
+      },
+      methods: {
+        setupCanvas() {
+          this.canvas = document.getElementById('lyricsCanvas');
+          this.ctx = this.canvas.getContext('2d');
+
+          // Set canvas resolution
+          const dpr = window.devicePixelRatio || 1;
+          const rect = this.canvas.getBoundingClientRect();
+          this.canvas.width = rect.width * dpr;
+          this.canvas.height = rect.height * dpr;
+          this.ctx.scale(dpr, dpr);
+
+          // Set font
+          this.ctx.font = `${this.fontSize}px Arial`;
+          this.ctx.textAlign = 'center';
+          this.ctx.textBaseline = 'middle';
+        },
+
+        draw() {
+          const width = this.canvas.width / (window.devicePixelRatio || 1);
+          const height = this.canvas.height / (window.devicePixelRatio || 1);
+
+          // Clear canvas
+          this.ctx.fillStyle = '#000';
+          this.ctx.fillRect(0, 0, width, height);
+
+          // Calculate total height of lyrics
+          const totalHeight = this.lyrics.length * this.lineHeight;
+
+          // Calculate scroll position based on current time
+          // We want the lyrics to scroll continuously from bottom to top
+          const progress = this.currentTime / this.duration;
+          this.scrollOffset = progress * (totalHeight + height);
+
+          // Find current line index
+          let currentLineIndex = 0;
+          for (let i = 0; i < this.lyrics.length; i++) {
+            if (this.lyrics[i].time <= this.currentTime) {
+              currentLineIndex = i;
+            } else {
+              break;
+            }
+          }
+
+          // Calculate progress to next line
+          let nextLineProgress = 0;
+          if (currentLineIndex < this.lyrics.length - 1) {
+            const currentLineTime = this.lyrics[currentLineIndex].time;
+            const nextLineTime = this.lyrics[currentLineIndex + 1].time;
+            nextLineProgress = (this.currentTime - currentLineTime) / (nextLineTime - currentLineTime);
+          }
+
+          // Draw each line
+          for (let i = 0; i < this.lyrics.length; i++) {
+            // Calculate position for this line
+            const yPos = (i * this.lineHeight) - this.scrollOffset + height / 2;
+
+            // Only draw if visible on canvas
+            if (yPos > -this.lineHeight && yPos < height + this.lineHeight) {
+              // Determine line style based on position
+              if (i === currentLineIndex) {
+                // Current line - white with fade out as next line approaches
+                const alpha = 1 - (nextLineProgress * 0.7);
+                this.ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+                this.ctx.font = `bold ${this.fontSize}px Arial`;
+              } else if (i === currentLineIndex + 1) {
+                // Next line - green with fade in
+                const alpha = nextLineProgress * 0.8;
+                this.ctx.fillStyle = `rgba(29, 185, 84, ${alpha})`;
+                this.ctx.font = `${this.fontSize}px Arial`;
+              } else {
+                // Other lines - faded white
+                const distance = Math.abs(i - currentLineIndex - nextLineProgress);
+                const alpha = Math.max(0.2, 1 - distance * 0.4);
+                this.ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+                this.ctx.font = `${this.fontSize}px Arial`;
+              }
+
+              // Draw the line
+              this.ctx.fillText(this.lyrics[i].text, width / 2, yPos);
+            }
+          }
+
+          // Draw center highlight
+          this.ctx.strokeStyle = 'rgba(29, 185, 84, 0.3)';
+          this.ctx.lineWidth = 1;
+          this.ctx.beginPath();
+          this.ctx.moveTo(0, height / 2);
+          this.ctx.lineTo(width, height / 2);
+          this.ctx.stroke();
+        },
+
+        animate(timestamp) {
+          if (!this.lastTime) this.lastTime = timestamp;
+          const deltaTime = (timestamp - this.lastTime) / 1000;
+          this.lastTime = timestamp;
+
+          if (this.isPlaying) {
+            this.currentTime += deltaTime;
+            if (this.currentTime >= this.duration) {
+              this.currentTime = this.duration;
+              this.isPlaying = false;
+            }
+            this.draw();
+          }
+
+          this.animationId = requestAnimationFrame(this.animate);
+        },
+
+        togglePlay() {
+          this.isPlaying = !this.isPlaying;
+          if (this.isPlaying) {
+            this.lastTime = 0;
+            this.animationId = requestAnimationFrame(this.animate);
+          } else {
+            this.stopAnimation();
+          }
+        },
+
+        reset() {
+          this.isPlaying = false;
+          this.stopAnimation();
+          this.currentTime = 0;
+          this.scrollOffset = 0;
+          this.draw();
+        },
+
+        stopAnimation() {
+          if (this.animationId) {
+            cancelAnimationFrame(this.animationId);
+            this.animationId = null;
+          }
+        },
+
+        formatTime(seconds) {
+          const mins = Math.floor(seconds / 60);
+          const secs = Math.floor(seconds % 60);
+          return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+        }
+      }
+    }).mount('#app');
+  </script>
+</body>
+
+</html>

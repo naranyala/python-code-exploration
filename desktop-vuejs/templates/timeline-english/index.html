@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>English Basics Learning Timeline</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0d1117;
+      background-image: 
+        radial-gradient(circle at 25% 25%, rgba(99, 102, 241, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 75% 75%, rgba(168, 85, 247, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 50% 50%, rgba(34, 197, 94, 0.05) 0%, transparent 50%);
+      margin: 0;
+      padding: 40px 20px;
+      min-height: 100vh;
+      color: #e6edf3;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 60px;
+    }
+
+    h1 {
+      font-size: 3.5rem;
+      font-weight: 800;
+      margin: 0 0 15px 0;
+      background: linear-gradient(135deg, #6366f1, #a855f7, #22c55e);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: -1px;
+    }
+
+    .subtitle {
+      font-size: 1.2rem;
+      color: #7d8590;
+      margin: 0;
+      font-weight: 400;
+    }
+
+    .progress-bar {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      height: 8px;
+      margin: 30px 0;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #6366f1, #a855f7, #22c55e);
+      border-radius: 12px;
+      transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+    }
+
+    .progress-fill::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+      animation: shimmer 2s infinite;
+    }
+
+    .progress-text {
+      text-align: center;
+      margin-top: 10px;
+      color: #7d8590;
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    .timeline {
+      position: relative;
+      margin-top: 40px;
+    }
+
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 30px;
+      top: 20px;
+      bottom: 20px;
+      width: 2px;
+      background: linear-gradient(to bottom, 
+        #6366f1 0%,
+        #a855f7 50%,
+        #22c55e 100%);
+      opacity: 0.6;
+    }
+
+    .step {
+      position: relative;
+      margin: 40px 0;
+      opacity: 0;
+      transform: translateX(-20px);
+      animation: slideIn 0.5s ease forwards;
+    }
+
+    .step:nth-child(1) { animation-delay: 0.1s; }
+    .step:nth-child(2) { animation-delay: 0.2s; }
+    .step:nth-child(3) { animation-delay: 0.3s; }
+    .step:nth-child(4) { animation-delay: 0.4s; }
+    .step:nth-child(5) { animation-delay: 0.5s; }
+    .step:nth-child(6) { animation-delay: 0.6s; }
+
+    .step-dot {
+      position: absolute;
+      left: 21px;
+      top: 20px;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #161b22;
+      border: 3px solid #6366f1;
+      z-index: 10;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer;
+    }
+
+    .step-dot::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 6px;
+      height: 6px;
+      background: #6366f1;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      transition: all 0.3s ease;
+    }
+
+    .step:nth-child(2) .step-dot { border-color: #8b5cf6; }
+    .step:nth-child(2) .step-dot::before { background: #8b5cf6; }
+    .step:nth-child(3) .step-dot { border-color: #a855f7; }
+    .step:nth-child(3) .step-dot::before { background: #a855f7; }
+    .step:nth-child(4) .step-dot { border-color: #c084fc; }
+    .step:nth-child(4) .step-dot::before { background: #c084fc; }
+    .step:nth-child(5) .step-dot { border-color: #34d399; }
+    .step:nth-child(5) .step-dot::before { background: #34d399; }
+    .step:nth-child(6) .step-dot { border-color: #22c55e; }
+    .step:nth-child(6) .step-dot::before { background: #22c55e; }
+
+    .step.completed .step-dot {
+      background: #22c55e;
+      border-color: #22c55e;
+      box-shadow: 0 0 20px rgba(34, 197, 94, 0.4);
+    }
+
+    .step.completed .step-dot::before {
+      content: '✓';
+      background: none;
+      color: #0d1117;
+      font-weight: bold;
+      font-size: 12px;
+      width: auto;
+      height: auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .step:hover .step-dot {
+      transform: scale(1.2);
+      box-shadow: 0 0 15px rgba(99, 102, 241, 0.3);
+    }
+
+    .step-content {
+      background: rgba(255, 255, 255, 0.03);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      padding: 25px 30px;
+      margin-left: 60px;
+      position: relative;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      overflow: hidden;
+    }
+
+    .step-content::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.5), transparent);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .step:hover .step-content {
+      transform: translateY(-2px);
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(99, 102, 241, 0.3);
+      box-shadow: 
+        0 20px 40px rgba(0, 0, 0, 0.2),
+        0 0 30px rgba(99, 102, 241, 0.1);
+    }
+
+    .step:hover .step-content::before {
+      opacity: 1;
+    }
+
+    .step.completed .step-content {
+      background: rgba(34, 197, 94, 0.05);
+      border-color: rgba(34, 197, 94, 0.2);
+    }
+
+    .step.completed .step-content::before {
+      background: linear-gradient(90deg, transparent, rgba(34, 197, 94, 0.5), transparent);
+    }
+
+    .step h3 {
+      margin: 0 0 12px 0;
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #f0f6fc;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .step p {
+      margin: 0 0 20px 0;
+      color: #8b949e;
+      font-size: 1rem;
+      line-height: 1.6;
+    }
+
+    .step.completed h3 {
+      color: #7d8590;
+    }
+
+    .step.completed p {
+      color: #6e7681;
+    }
+
+    .step-number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      background: rgba(99, 102, 241, 0.1);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #6366f1;
+    }
+
+    .step.completed .step-number {
+      background: rgba(34, 197, 94, 0.1);
+      border-color: rgba(34, 197, 94, 0.3);
+      color: #22c55e;
+    }
+
+    .mark-done-btn {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 12px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .mark-done-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: left 0.6s ease;
+    }
+
+    .mark-done-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(99, 102, 241, 0.3);
+    }
+
+    .mark-done-btn:hover::before {
+      left: 100%;
+    }
+
+    .mark-done-btn:disabled {
+      background: rgba(34, 197, 94, 0.8);
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .mark-done-btn:disabled::before {
+      display: none;
+    }
+
+    .completed-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(34, 197, 94, 0.1);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      color: #22c55e;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    @keyframes slideIn {
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    @keyframes shimmer {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+
+    @media (max-width: 768px) {
+      body {
+        padding: 30px 15px;
+      }
+
+      h1 {
+        font-size: 2.5rem;
+      }
+
+      .timeline::before {
+        left: 20px;
+      }
+
+      .step-dot {
+        left: 11px;
+        width: 18px;
+        height: 18px;
+      }
+
+      .step-content {
+        margin-left: 45px;
+        padding: 20px;
+      }
+
+      .step h3 {
+        font-size: 1.2rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      h1 {
+        font-size: 2rem;
+      }
+
+      .step-content {
+        padding: 18px;
+      }
+
+      .mark-done-btn {
+        padding: 10px 20px;
+        font-size: 0.85rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div class="container">
+      <div class="header">
+        <h1>English Learning Journey</h1>
+        <p class="subtitle">Master the basics step by step</p>
+        
+        <div class="progress-bar">
+          <div class="progress-fill" :style="{width: progressPercentage + '%'}"></div>
+        </div>
+        <div class="progress-text">
+          {{ completedSteps }} of {{ totalSteps }} steps completed ({{ Math.round(progressPercentage) }}%)
+        </div>
+      </div>
+      
+      <div class="timeline">
+        <div v-for="(step, index) in steps" :key="index" class="step" :class="{completed: step.done}">
+          <div class="step-dot"></div>
+          <div class="step-content">
+            <h3>
+              <span class="step-number">{{ index + 1 }}</span>
+              {{ step.title }}
+            </h3>
+            <p>{{ step.description }}</p>
+            <button 
+              v-if="!step.done" 
+              @click="markDone(index)" 
+              class="mark-done-btn"
+            >
+              ✓ Mark as Completed
+            </button>
+            <div v-else class="completed-badge">
+              ✓ Completed
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    const { createApp } = Vue;
+    createApp({
+      data() {
+        return {
+          steps: [
+            { 
+              title: "Learn the Alphabet", 
+              description: "Master all 26 English letters, their sounds, and basic pronunciation. Practice writing both uppercase and lowercase letters.", 
+              done: false 
+            },
+            { 
+              title: "Basic Greetings & Introductions", 
+              description: "Learn essential phrases like hello, goodbye, please, thank you, and how to introduce yourself confidently.", 
+              done: false 
+            },
+            { 
+              title: "Numbers & Counting (1–100)", 
+              description: "Practice counting from 1 to 100, learn number words, and understand basic mathematical expressions in English.", 
+              done: false 
+            },
+            { 
+              title: "Essential Vocabulary", 
+              description: "Build your word bank with everyday terms for objects, colors, family members, food, and common places.", 
+              done: false 
+            },
+            { 
+              title: "Basic Grammar Foundations", 
+              description: "Understand simple sentence structure (Subject + Verb + Object), present tense, and basic question formation.", 
+              done: false 
+            },
+            { 
+              title: "Simple Conversations", 
+              description: "Practice real-world dialogues for shopping, ordering food, asking for directions, and other daily situations.", 
+              done: false 
+            }
+          ]
+        }
+      },
+      computed: {
+        totalSteps() {
+          return this.steps.length;
+        },
+        completedSteps() {
+          return this.steps.filter(step => step.done).length;
+        },
+        progressPercentage() {
+          return this.totalSteps > 0 ? (this.completedSteps / this.totalSteps) * 100 : 0;
+        }
+      },
+      methods: {
+        markDone(index) {
+          this.steps[index].done = true;
+        }
+      }
+    }).mount("#app");
+  </script>
+</body>
+</html>

@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FOSS Timeline</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0a0a0a;
+      background-image: 
+        radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 40% 80%, rgba(120, 198, 119, 0.15) 0%, transparent 50%);
+      margin: 0;
+      padding: 60px 20px;
+      min-height: 100vh;
+      color: #e0e6ed;
+      line-height: 1.6;
+    }
+    
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+    
+    .header {
+      text-align: center;
+      margin-bottom: 80px;
+    }
+    
+    h1 {
+      font-size: 4rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #00ff88, #00b8ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin: 0 0 20px 0;
+      letter-spacing: -2px;
+    }
+    
+    .subtitle {
+      font-size: 1.4rem;
+      color: #8b949e;
+      font-weight: 400;
+      margin: 0;
+    }
+    
+    .timeline {
+      position: relative;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 40px 0;
+    }
+    
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 50px;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: linear-gradient(to bottom, 
+        transparent 0%,
+        #00ff88 10%,
+        #00b8ff 50%,
+        #ff6b6b 90%,
+        transparent 100%);
+      opacity: 0.6;
+    }
+    
+    .timeline-item {
+      position: relative;
+      margin: 50px 0;
+      display: flex;
+      align-items: flex-start;
+      opacity: 0;
+      transform: translateX(-30px);
+      animation: slideIn 0.6s ease forwards;
+    }
+    
+    .timeline-item:nth-child(1) { animation-delay: 0.1s; }
+    .timeline-item:nth-child(2) { animation-delay: 0.2s; }
+    .timeline-item:nth-child(3) { animation-delay: 0.3s; }
+    .timeline-item:nth-child(4) { animation-delay: 0.4s; }
+    .timeline-item:nth-child(5) { animation-delay: 0.5s; }
+    .timeline-item:nth-child(6) { animation-delay: 0.6s; }
+    .timeline-item:nth-child(7) { animation-delay: 0.7s; }
+    .timeline-item:nth-child(8) { animation-delay: 0.8s; }
+    .timeline-item:nth-child(9) { animation-delay: 0.9s; }
+    
+    .timeline-dot {
+      position: absolute;
+      left: 41px;
+      top: 12px;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #1a1a1a;
+      border: 3px solid #00ff88;
+      z-index: 10;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer;
+    }
+    
+    .timeline-dot::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 6px;
+      height: 6px;
+      background: #00ff88;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      transition: all 0.3s ease;
+    }
+    
+    .timeline-dot::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      background: rgba(0, 255, 136, 0.2);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      transition: all 0.4s ease;
+    }
+    
+    .timeline-item:hover .timeline-dot {
+      transform: scale(1.3);
+      border-color: #00b8ff;
+      box-shadow: 0 0 20px rgba(0, 184, 255, 0.4);
+    }
+    
+    .timeline-item:hover .timeline-dot::before {
+      background: #00b8ff;
+    }
+    
+    .timeline-item:hover .timeline-dot::after {
+      width: 40px;
+      height: 40px;
+      background: rgba(0, 184, 255, 0.1);
+    }
+    
+    .timeline-content {
+      background: rgba(255, 255, 255, 0.03);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      padding: 30px 35px;
+      margin-left: 80px;
+      flex: 1;
+      position: relative;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      overflow: hidden;
+    }
+    
+    .timeline-content::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(0, 255, 136, 0.5), transparent);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    
+    .timeline-item:hover .timeline-content {
+      transform: translateY(-2px);
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(0, 255, 136, 0.3);
+      box-shadow: 
+        0 20px 40px rgba(0, 0, 0, 0.3),
+        0 0 30px rgba(0, 255, 136, 0.1);
+    }
+    
+    .timeline-item:hover .timeline-content::before {
+      opacity: 1;
+    }
+    
+    .title {
+      font-weight: 700;
+      font-size: 1.5rem;
+      background: linear-gradient(135deg, #00ff88, #00b8ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .title-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(0, 255, 136, 0.1);
+      padding: 6px 12px;
+      border-radius: 12px;
+      font-size: 0.9rem;
+      border: 1px solid rgba(0, 255, 136, 0.2);
+    }
+    
+    .desc {
+      color: #b1bac4;
+      font-size: 1.05rem;
+      line-height: 1.7;
+      font-weight: 400;
+    }
+    
+    .timeline-item:nth-child(1) .timeline-dot { border-color: #ff6b6b; }
+    .timeline-item:nth-child(1) .timeline-dot::before { background: #ff6b6b; }
+    .timeline-item:nth-child(2) .timeline-dot { border-color: #4ecdc4; }
+    .timeline-item:nth-child(2) .timeline-dot::before { background: #4ecdc4; }
+    .timeline-item:nth-child(3) .timeline-dot { border-color: #45b7d1; }
+    .timeline-item:nth-child(3) .timeline-dot::before { background: #45b7d1; }
+    .timeline-item:nth-child(4) .timeline-dot { border-color: #f9ca24; }
+    .timeline-item:nth-child(4) .timeline-dot::before { background: #f9ca24; }
+    .timeline-item:nth-child(5) .timeline-dot { border-color: #f0932b; }
+    .timeline-item:nth-child(5) .timeline-dot::before { background: #f0932b; }
+    .timeline-item:nth-child(6) .timeline-dot { border-color: #eb4d4b; }
+    .timeline-item:nth-child(6) .timeline-dot::before { background: #eb4d4b; }
+    .timeline-item:nth-child(7) .timeline-dot { border-color: #6c5ce7; }
+    .timeline-item:nth-child(7) .timeline-dot::before { background: #6c5ce7; }
+    .timeline-item:nth-child(8) .timeline-dot { border-color: #a29bfe; }
+    .timeline-item:nth-child(8) .timeline-dot::before { background: #a29bfe; }
+    .timeline-item:nth-child(9) .timeline-dot { border-color: #00ff88; }
+    .timeline-item:nth-child(9) .timeline-dot::before { background: #00ff88; }
+    
+    @keyframes slideIn {
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    
+    .timeline-item:nth-child(9) .timeline-dot {
+      animation: pulse 2s infinite;
+    }
+    
+    @media (max-width: 768px) {
+      body {
+        padding: 40px 15px;
+      }
+      
+      h1 {
+        font-size: 2.8rem;
+      }
+      
+      .subtitle {
+        font-size: 1.1rem;
+      }
+      
+      .timeline::before {
+        left: 25px;
+      }
+      
+      .timeline-dot {
+        left: 16px !important;
+        width: 18px;
+        height: 18px;
+      }
+      
+      .timeline-content {
+        margin-left: 55px;
+        padding: 25px;
+      }
+      
+      .title {
+        font-size: 1.3rem;
+      }
+      
+      .desc {
+        font-size: 1rem;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      h1 {
+        font-size: 2.2rem;
+      }
+      
+      .timeline-content {
+        padding: 20px;
+        border-radius: 16px;
+      }
+      
+      .title {
+        font-size: 1.2rem;
+      }
+      
+      .desc {
+        font-size: 0.95rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div class="container">
+      <div class="header">
+        <h1>FOSS Timeline</h1>
+        <p class="subtitle">The Evolution of Free & Open Source Software</p>
+      </div>
+      
+      <div class="timeline">
+        <div class="timeline-item" v-for="(event, i) in timeline" :key="i">
+          <div class="timeline-dot"></div>
+          <div class="timeline-content">
+            <div class="title">
+              <span class="title-badge">{{ event.title }}</span>
+            </div>
+            <div class="desc">{{ event.text }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    const { createApp } = Vue;
+    createApp({
+      data() {
+        return {
+ timeline: [
+            { title: "1. Idea & Planning", text: "Identify problems, brainstorm solutions, and set project goals." },
+            { title: "2. Requirements Gathering", text: "Collect functional and non-functional requirements from stakeholders." },
+            { title: "3. System Design", text: "Plan architecture, databases, APIs, and choose technology stack." },
+            { title: "4. Implementation (Coding)", text: "Develop the software in iterations, following chosen methodology (Agile, Scrum, etc.)." },
+            { title: "5. Testing & Quality Assurance", text: "Verify features, fix bugs, and ensure reliability, security, and performance." },
+            { title: "6. Deployment", text: "Release the software into production environments." },
+            { title: "7. Maintenance & Updates", text: "Monitor, fix issues, and add new features over time." },
+            { title: "8. Retirement", text: "Eventually replace or decommission the software when obsolete." }
+          ]
+        }
+      }
+    }).mount("#app")
+  </script>
+</body>
+</html>
+
+
